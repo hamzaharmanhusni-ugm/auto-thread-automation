@@ -13,8 +13,9 @@ export function McpGuide({ appUrl, token = "TOKEN-DARI-PENGATURAN" }: { appUrl: 
   const [client, setClient] = useState<McpClient>("Claude Desktop");
 
   useEffect(() => {
-    if (!appUrl && typeof window !== "undefined") setOrigin(window.location.origin);
-  }, [appUrl]);
+    // Always prefer the live domain (fixes stale APP_URL like localhost).
+    if (typeof window !== "undefined") setOrigin(window.location.origin);
+  }, []);
 
   const base = (origin || "https://app-kamu.com").replace(/\/$/, "");
   const mcpUrl = `${base}/api/mcp`;
