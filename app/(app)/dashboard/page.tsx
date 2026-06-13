@@ -14,6 +14,7 @@ import { getCurrentWorkspaceId } from "@/lib/workspace";
 import { PageHeader, SectionLabel } from "@/components/page-header";
 import { MetricCard } from "@/components/metric-card";
 import { StatusBadge } from "@/components/status-badge";
+import { OnboardingChecklist, type ChecklistStep } from "@/components/onboarding-checklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDateTimeWIB } from "@/lib/utils";
@@ -39,16 +40,40 @@ export default async function DashboardPage() {
   const ws = await getCurrentWorkspaceId();
   const supabase = await createClient();
 
-  const [{ data: metricsRaw }, { data: recent }] = await Promise.all([
+  const head = { count: "exact" as const, head: true };
+  const [
+    { data: metricsRaw },
+    { data: recent },
+    { count: accountsCount },
+    { count: personasCount },
+    { count: contentsCount },
+    { count: schedulesCount },
+    { data: replizCred },
+  ] = await Promise.all([
     supabase.rpc("dashboard_metrics", { p_workspace_id: ws }),
     supabase
       .from("contents")
       .select("id, title, post_type, status, viral_score, created_at")
       .order("created_at", { ascending: false })
       .limit(6),
+    supabase.from("accounts").select("id", head),
+    supabase.from("personas").select("id", head),
+    supabase.from("contents").select("id", head),
+    supabase.from("schedules").select("id", head).neq("status", "cancelled"),
+    supabase.from("repliz_credentials").select("workspace_id").eq("is_default", true).maybeSingle(),
   ]);
 
   const m = (metricsRaw ?? {}) as Partial<Metrics>;
+
+  const hasRepliz =
+    Boolean(replizCred) || Boolean(process.env.REPLIZ_USERNAME && process.env.REPLIZ_PASSWORD);
+  const steps: ChecklistStep[] = [
+    { label: "Hubungkan Repliz", hint: "Isi kredensial Repliz di Pengaturan.", done: hasRepliz, href: "/pengaturan", cta: "Atur" },
+    { label: "Sinkronkan akun Threads", hint: "Tarik akunmu dari Repliz.", done: (accountsCount ?? 0) > 0, href: "/akun", cta: "Sinkron" },
+    { label: "Buat persona", hint: "Beri AI gaya bahasa & audiensmu.", done: (personasCount ?? 0) > 0, href: "/persona", cta: "Buat" },
+    { label: "Generate konten pertama", hint: "Pakai AI atau tulis manual.", done: (contentsCount ?? 0) > 0, href: "/riset", cta: "Generate" },
+    { label: "Jadwalkan konten", hint: "Tarik ke kalender.", done: (schedulesCount ?? 0) > 0, href: "/kalender", cta: "Jadwalkan" },
+  ];
 
   return (
     <>
@@ -57,6 +82,8 @@ export default async function DashboardPage() {
         title="Dashboard"
         description="Pantau performa otomatisasi Threads-mu dalam satu layar."
       />
+
+      <OnboardingChecklist steps={steps} />
 
       <SectionLabel>Akun &amp; Konten</SectionLabel>
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

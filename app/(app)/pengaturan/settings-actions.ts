@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWorkspaceId } from "@/lib/workspace";
@@ -7,6 +8,40 @@ import { getReplizClientForWorkspace } from "@/lib/repliz/resolve";
 import type { TablesInsert } from "@/lib/database.types";
 
 type Result = { ok: boolean; error?: string };
+
+/** Auto-generate a fresh MCP bearer token for this workspace (used when env MCP_AUTH_TOKEN is unset). */
+export async function generateMcpToken(): Promise<{ ok: boolean; token?: string; error?: string }> {
+  if (process.env.MCP_AUTH_TOKEN) {
+    return { ok: false, error: "Token sudah diatur lewat environment (.env), tidak bisa diubah dari sini." };
+  }
+  const ws = await getCurrentWorkspaceId();
+  const sb = await createClient();
+  const token = `tg_${randomBytes(24).toString("base64url")}`;
+  const { error } = await sb
+    .from("workspace_settings")
+    .upsert({ workspace_id: ws, mcp_auth_token: token }, { onConflict: "workspace_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pengaturan");
+  return { ok: true, token };
+}
+
+/** Save a manually-typed MCP bearer token for this workspace. */
+export async function saveMcpToken(token: string): Promise<Result> {
+  if (process.env.MCP_AUTH_TOKEN) {
+    return { ok: false, error: "Token sudah diatur lewat environment (.env), tidak bisa diubah dari sini." };
+  }
+  const ws = await getCurrentWorkspaceId();
+  const sb = await createClient();
+  const t = token.trim();
+  if (t.length < 12) return { ok: false, error: "Token minimal 12 karakter agar aman." };
+  if (/\s/.test(t)) return { ok: false, error: "Token tidak boleh mengandung spasi." };
+  const { error } = await sb
+    .from("workspace_settings")
+    .upsert({ workspace_id: ws, mcp_auth_token: t }, { onConflict: "workspace_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pengaturan");
+  return { ok: true };
+}
 
 /** Save the workspace's Repliz username/password (used for schedule + auto-comment). */
 export async function saveReplizCredentials(username: string, password: string): Promise<Result> {

@@ -20,7 +20,7 @@ export default async function KalenderPage({
   const endUtc = wibToUtcIso(next.y, next.m, 1, 0, 0);
 
   const sb = await createClient();
-  const [{ data: schedules }, { data: drafts }] = await Promise.all([
+  const [{ data: schedules }, { data: drafts }, { data: accountsRaw }] = await Promise.all([
     sb
       .from("schedules")
       .select("id, content_id, scheduled_at, status, contents(title, post_type)")
@@ -34,7 +34,14 @@ export default async function KalenderPage({
       .eq("status", "draft")
       .order("created_at", { ascending: false })
       .limit(100),
+    sb.from("accounts").select("id, username, personas(count)").order("created_at", { ascending: true }),
   ]);
+
+  const genAccounts = (accountsRaw ?? []).map((a) => ({
+    id: a.id,
+    username: a.username,
+    hasPersona: ((a.personas as unknown as { count: number }[])?.[0]?.count ?? 0) > 0,
+  }));
 
   const scheduleItems: ScheduleItem[] = (schedules ?? []).map((s) => {
     const c = s.contents as unknown as { title: string | null; post_type: string } | null;
@@ -56,10 +63,11 @@ export default async function KalenderPage({
   return (
     <>
       <PageHeader
+        eyebrow="Jadwal"
         title="Kalender"
-        description="Jadwalkan konten dengan tarik-lepas. Semua waktu dalam WIB."
+        description="Jadwalkan konten dengan tarik-lepas, atau buat konten baru langsung di sini. Semua waktu WIB."
       />
-      <CalendarBoard monthKey={monthKey} drafts={draftItems} schedules={scheduleItems} />
+      <CalendarBoard monthKey={monthKey} drafts={draftItems} schedules={scheduleItems} accounts={genAccounts} />
     </>
   );
 }

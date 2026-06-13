@@ -4,20 +4,34 @@ App = **Next.js** + **Supabase** (DB, Auth, queue/cron, Edge Functions) + **Repl
 
 ---
 
-## 0. Siapkan Database (sekali, untuk semua hosting)
+## 0. Database (sekali) — migrasi otomatis saat deploy
 
-Skema lengkap ada di [`supabase/migrations/`](../supabase/migrations/). Terapkan ke project Supabase-mu:
+App ini memakai **Supabase**. Ada dua kemungkinan:
+
+**A. Pakai project Supabase yang sudah ada (paling umum).**
+Kalau kamu memakai `.env` yang sudah disediakan (mengarah ke project Supabase tim), **database sudah dimigrasi** — tidak ada langkah tambahan. Lanjut ke Environment Variables.
+
+**B. Project Supabase baru (fresh).**
+Terapkan migrasi ke project barumu. Pilih salah satu:
 
 ```bash
+# Cara 1: Supabase CLI (disarankan, idempotent)
 supabase link --project-ref <REF>
-supabase db push
+supabase db push        # menerapkan semua file di supabase/migrations/ secara urut
 ```
-atau tempel isi file `supabase/migrations/*.sql` (urut) ke **SQL Editor** Supabase lalu Run.
 
-Lalu aktifkan **Email auth** (Authentication → Providers → Email). Ambil 3 kunci di Project Settings → API:
-`Project URL`, `publishable key` (anon), `service_role` (rahasia).
+```text
+# Cara 2: tanpa CLI
+Buka Supabase Dashboard → SQL Editor → tempel isi tiap file
+supabase/migrations/0001_init.sql lalu 0002_*.sql (urut) → Run.
+```
 
-> Data demo (opsional): jalankan [`scripts/import_from_sheet.sql`](../scripts/import_from_sheet.sql).
+Setelah migrasi:
+1. Aktifkan **Email auth** (Authentication → Providers → Email).
+2. Ambil 3 kunci di Project Settings → API: `Project URL`, `publishable key` (anon), `service_role` (rahasia) → isi ke Environment Variables.
+3. (Opsional) data demo: jalankan [`scripts/import_from_sheet.sql`](../scripts/import_from_sheet.sql).
+
+> Catatan: skema adalah **source of truth** di project Supabase. Untuk menyalin skema project lama ke project baru secara presisi, `supabase db pull` dari project lama lalu `supabase db push` ke project baru.
 
 ---
 
@@ -30,13 +44,13 @@ Lalu aktifkan **Email auth** (Authentication → Providers → Email). Ambil 3 k
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | **server only** |
 | `USER_EMAIL_DEFAULT` | ✅ | email admin pertama (yang boleh daftar) |
 | `USER_ALLOW_REGISTRATION` | ➖ | `false` (default) = anggota lain via undangan |
-| `MCP_AUTH_TOKEN` | ✅* | aktifkan integrasi MCP (Claude/Codex) |
+| `MCP_AUTH_TOKEN` | ➖ | integrasi MCP. **Kalau kosong, token bisa dibuat dari UI** (Pengaturan → Kendalikan lewat AI) |
 | `REPLIZ_USERNAME`, `REPLIZ_PASSWORD` | ➖ | default Repliz (bisa diisi dari UI) |
 | `REPLIZ_WEBHOOK_SECRET` | ✅* | verifikasi webhook auto-comment |
-| `GEMINI_API_KEY` | ➖ | hanya jika pakai generate manual (MCP tidak perlu) |
-| `APP_URL` | ➖ | URL publik app |
+| `GEMINI_API_KEY` | ➖ | generate konten/komentar dengan AI (bisa diisi dari UI) |
+| `APP_URL` | ✅* | URL publik app — mengisi otomatis URL MCP di panduan setelah deploy |
 
-\* sangat disarankan.
+\* sangat disarankan. Setelah deploy, isi `APP_URL` dengan domain final agar config MCP di UI langsung benar.
 
 ---
 
@@ -96,16 +110,17 @@ $$);
 
 ## E. Akses MCP setelah deploy (Vercel & Dokploy)
 
-MCP server ikut ter-deploy di `https://<domain>/api/mcp`. Yang perlu disiapkan saat deploy:
-1. Set env `MCP_AUTH_TOKEN` di Vercel/Dokploy (token rahasia panjang).
-2. Pastikan domain HTTPS aktif.
-3. Sambungkan dari Claude (lihat [MCP.md](MCP.md)):
+MCP server ikut ter-deploy di `https://<domain>/api/mcp`. Yang perlu disiapkan:
+1. **Token**: set env `MCP_AUTH_TOKEN`, **atau** kosongkan dan buat token dari **Pengaturan → Kendalikan lewat AI → Generate otomatis** (admin).
+2. Set `APP_URL` ke domain final agar config di UI memakai URL yang benar otomatis.
+3. Pastikan domain HTTPS aktif.
+4. Sambungkan dari aplikasimu — **config siap-tempel ada di halaman Pengaturan** (pilih Claude Desktop / Claude Code / Cursor / OpenCode). Contoh Claude Code:
    ```bash
    claude mcp add threadsgrowth --transport http https://<domain>/api/mcp \
-     --header "Authorization: Bearer <MCP_AUTH_TOKEN>"
+     --header "Authorization: Bearer <TOKEN>"
    ```
 
-Itu saja — MCP otomatis tersedia di domain yang sama dengan app, baik di Vercel maupun Dokploy.
+MCP otomatis tersedia di domain yang sama dengan app, baik di Vercel maupun Dokploy. Detail per aplikasi: [MCP.md](MCP.md) atau halaman **Panduan** (`/panduan#mcp`).
 
 ---
 

@@ -32,7 +32,7 @@ export function MetricCard({
         </div>
         <div className="min-w-0">
           <p className="eyebrow truncate">{label}</p>
-          <p className="mt-1 font-display text-[1.75rem] font-bold leading-none tracking-tight tabular-nums">
+          <p className="mt-1 font-display text-3xl font-bold leading-none tracking-tight tabular-nums">
             {formatNumber(value)}
             {suffix ? (
               <span className="ml-0.5 text-lg font-semibold text-muted-foreground">{suffix}</span>

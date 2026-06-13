@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, Loader2, Check, X, FileText, Wand2 } from "lucide-react";
 import { toast } from "sonner";
@@ -65,8 +66,27 @@ export function ResearchPanel({ accounts, ideas }: { accounts: AccountOption[]; 
     });
   }
 
+  const hasUsable = accounts.some((a) => a.hasPersona);
+
   return (
     <div className="space-y-6">
+      {!hasUsable ? (
+        <Card className="border-warning/40 bg-warning/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+            <p className="text-muted-foreground">
+              {accounts.length === 0
+                ? "Belum ada akun. Sinkronkan akun Threads dulu agar bisa generate ide."
+                : "Akunmu belum punya persona. Buat persona dulu supaya AI tahu gaya kontenmu."}
+            </p>
+            <Button asChild size="sm" variant="outline">
+              <Link href={accounts.length === 0 ? "/akun" : "/persona"}>
+                {accounts.length === 0 ? "Ke Akun" : "Buat Persona"}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {/* Generator */}
       <Card>
         <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-end">

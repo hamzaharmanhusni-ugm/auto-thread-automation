@@ -35,3 +35,34 @@ export async function generateCommentReply(input: {
   const text = await ai.generateText({ system, prompt, temperature: 0.85 });
   return text.trim().replace(/^["']|["']$/g, "");
 }
+
+/**
+ * Generate a short, natural comment that a DIFFERENT connected account would
+ * leave on someone else's post (engagement seeding between Repliz accounts).
+ */
+export async function generateEngagementComment(input: {
+  postBody: string;
+  persona?: PersonaInput | null;
+  provider?: AiProvider;
+  client?: AiClient;
+}): Promise<string> {
+  const ai = input.client ?? getAiClient(input.provider);
+  const p = input.persona;
+
+  const system = [
+    "Kamu meninggalkan komentar di postingan Threads orang lain, berbahasa Indonesia.",
+    "Komentar singkat (maksimal 1 kalimat), tulus, relevan dengan isi postingan, terdengar seperti orang asli.",
+    "Boleh berupa apresiasi, pertanyaan ringan, atau tanggapan. Hindari spam, hindari kesan promosi, maksimal 1 emoji.",
+    p ? `Tulis seolah kamu: ${p.name}${p.tone ? `, nada ${p.tone}` : ""}.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const prompt = [
+    `Isi postingan: "${input.postBody.slice(0, 600)}"`,
+    "Tulis SATU komentar saja (tanpa tanda kutip, tanpa penjelasan).",
+  ].join("\n");
+
+  const text = await ai.generateText({ system, prompt, temperature: 0.9 });
+  return text.trim().replace(/^["']|["']$/g, "");
+}

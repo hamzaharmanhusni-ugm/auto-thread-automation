@@ -37,4 +37,5 @@ yarn-error.log*
 # local audit / tooling artifacts
 /audit-*.png
 /.playwright-mcp/
+/.dev-server.log
 .claude/settings.local.json

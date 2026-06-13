@@ -37,3 +37,9 @@ export const postTypeLabel: Record<string, string> = {
   single: "Single",
   thread: "Nested (Thread)",
 };
+
+export const ROLE_LABEL: Record<string, string> = {
+  admin: "Admin",
+  editor: "Editor",
+  viewer: "Viewer",
+};

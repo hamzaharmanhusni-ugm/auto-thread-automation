@@ -1036,6 +1036,7 @@ export type Database = {
           default_ai_provider: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key: string | null
           gemini_model: string | null
+          mcp_auth_token: string | null
           openai_api_key: string | null
           posts_per_day: number
           repliz_webhook_secret: string | null
@@ -1050,6 +1051,7 @@ export type Database = {
           default_ai_provider?: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key?: string | null
           gemini_model?: string | null
+          mcp_auth_token?: string | null
           openai_api_key?: string | null
           posts_per_day?: number
           repliz_webhook_secret?: string | null
@@ -1064,6 +1066,7 @@ export type Database = {
           default_ai_provider?: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key?: string | null
           gemini_model?: string | null
+          mcp_auth_token?: string | null
           openai_api_key?: string | null
           posts_per_day?: number
           repliz_webhook_secret?: string | null

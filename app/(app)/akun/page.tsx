@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AtSign } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWorkspaceId } from "@/lib/workspace";
@@ -14,14 +15,21 @@ import { formatDateTimeWIB } from "@/lib/utils";
 export default async function AkunPage() {
   await getCurrentWorkspaceId();
   const supabase = await createClient();
-  const { data: accounts } = await supabase
-    .from("accounts")
-    .select("id, username, display_name, avatar_url, status, auto_reply_mode, last_synced_at, personas(count)")
-    .order("created_at", { ascending: true });
+  const [{ data: accounts }, { data: replizCred }] = await Promise.all([
+    supabase
+      .from("accounts")
+      .select("id, username, display_name, avatar_url, status, auto_reply_mode, last_synced_at, personas(count)")
+      .order("created_at", { ascending: true }),
+    supabase.from("repliz_credentials").select("workspace_id").eq("is_default", true).maybeSingle(),
+  ]);
+
+  const hasRepliz =
+    Boolean(replizCred) || Boolean(process.env.REPLIZ_USERNAME && process.env.REPLIZ_PASSWORD);
 
   return (
     <>
       <PageHeader
+        eyebrow="Threads"
         title="Akun"
         description="Akun Threads yang terhubung lewat Repliz."
         action={<SyncAccountButton />}
@@ -67,9 +75,21 @@ export default async function AkunPage() {
       ) : (
         <EmptyState
           icon={AtSign}
-          title="Belum ada akun"
-          description="Hubungkan akun Threads pertamamu lewat Repliz untuk mulai membuat dan menjadwalkan konten."
-          action={<Button>Hubungkan Akun Threads</Button>}
+          title={hasRepliz ? "Belum ada akun" : "Hubungkan Repliz dulu"}
+          description={
+            hasRepliz
+              ? "Klik Sinkronkan Akun untuk menarik akun Threads-mu dari Repliz ke sini."
+              : "Akun ditarik dari Repliz. Isi kredensial Repliz di Pengaturan dulu, lalu sinkronkan akunmu."
+          }
+          action={
+            hasRepliz ? (
+              <SyncAccountButton />
+            ) : (
+              <Button asChild>
+                <Link href="/pengaturan">Ke Pengaturan</Link>
+              </Button>
+            )
+          }
         />
       )}
     </>

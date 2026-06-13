@@ -1,16 +1,20 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Eye, EyeOff, Loader2, Check, Copy, Plug, KeyRound, Bot, Link2, CalendarClock } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Eye, EyeOff, Loader2, Check, Plug, KeyRound, Bot, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CopyBlock } from "@/components/copy-block";
+import { MCP_CLIENTS, mcpConfigFor, type McpClient } from "@/lib/mcp/config";
 import {
   saveReplizCredentials,
   testReplizConnection,
   saveAiSettings,
   saveAutomationSettings,
+  generateMcpToken,
+  saveMcpToken,
 } from "./settings-actions";
 
 function SecretInput({
@@ -67,6 +71,9 @@ export function CredentialsCards({
   hasGeminiKey,
   geminiModel,
   mcpConfigured,
+  mcpToken,
+  mcpFromEnv,
+  appUrl,
   postsPerDay,
   autoCommentCount,
   dailyPostHour,
@@ -77,6 +84,9 @@ export function CredentialsCards({
   hasGeminiKey: boolean;
   geminiModel: string | null;
   mcpConfigured: boolean;
+  mcpToken: string;
+  mcpFromEnv: boolean;
+  appUrl: string;
   postsPerDay: number;
   autoCommentCount: number;
   dailyPostHour: number;
@@ -86,7 +96,18 @@ export function CredentialsCards({
       <ReplizCard hasCreds={hasReplizCreds} username={replizUsername} />
       <AiCard provider={aiProvider} hasKey={hasGeminiKey} model={geminiModel} />
       <AutomationCard postsPerDay={postsPerDay} autoCommentCount={autoCommentCount} dailyPostHour={dailyPostHour} />
-      <McpCard configured={mcpConfigured} />
+      <McpCard configured={mcpConfigured} token={mcpToken} fromEnv={mcpFromEnv} appUrl={appUrl} />
+    </div>
+  );
+}
+
+function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+        {n}
+      </span>
+      <div className="min-w-0 flex-1 space-y-2 text-sm">{children}</div>
     </div>
   );
 }
@@ -294,42 +315,175 @@ function AiCard({ provider, hasKey, model }: { provider: string; hasKey: boolean
   );
 }
 
-function McpCard({ configured }: { configured: boolean }) {
-  const [copied, setCopied] = useState(false);
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://app-kamu.com";
-  const snippet = `claude mcp add threadsgrowth --transport http ${origin}/api/mcp --header "Authorization: Bearer <MCP_AUTH_TOKEN>"`;
+function McpTokenManager({ token, fromEnv }: { token: string; fromEnv: boolean }) {
+  const [current, setCurrent] = useState(token);
+  const [manual, setManual] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [pending, start] = useTransition();
 
-  function copy() {
-    navigator.clipboard.writeText(snippet);
-    setCopied(true);
-    toast.success("Perintah disalin.");
-    setTimeout(() => setCopied(false), 1500);
+  function gen() {
+    start(async () => {
+      const res = await generateMcpToken();
+      if (res.ok && res.token) {
+        setCurrent(res.token);
+        toast.success("Token baru dibuat & disimpan.");
+      } else toast.error(res.error ?? "Gagal membuat token.");
+    });
   }
+  function saveManual() {
+    start(async () => {
+      const res = await saveMcpToken(manual);
+      if (res.ok) {
+        setCurrent(manual.trim());
+        setManual("");
+        setEditing(false);
+        toast.success("Token disimpan.");
+      } else toast.error(res.error ?? "Gagal menyimpan token.");
+    });
+  }
+
+  if (fromEnv) {
+    return (
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium">Token rahasiamu</p>
+        <CopyBlock text={current} label="Salin token" />
+        <p className="text-xs text-muted-foreground">
+          Diatur lewat environment (<code className="rounded bg-muted px-1">MCP_AUTH_TOKEN</code>), terkunci dari sini.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">Token rahasiamu</p>
+      {current ? (
+        <>
+          <CopyBlock text={current} label="Salin token" />
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={gen} disabled={pending}>
+              {pending ? <Loader2 className="size-3.5 animate-spin" /> : <KeyRound className="size-3.5" />} Generate ulang
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setEditing((e) => !e)} disabled={pending}>
+              Isi manual
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="rounded-lg border border-dashed bg-muted/30 p-3">
+          <p className="mb-2 text-sm text-muted-foreground">
+            MCP belum aktif. Buat token dulu agar Claude/Cursor bisa tersambung.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={gen} disabled={pending}>
+              {pending ? <Loader2 className="size-3.5 animate-spin" /> : <KeyRound className="size-3.5" />} Generate
+              otomatis
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setEditing((e) => !e)} disabled={pending}>
+              Isi manual
+            </Button>
+          </div>
+        </div>
+      )}
+      {editing ? (
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <input
+            value={manual}
+            onChange={(e) => setManual(e.target.value)}
+            placeholder="token-rahasia-minimal-12-karakter"
+            className="h-9 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+          />
+          <Button size="sm" onClick={saveManual} disabled={pending || manual.trim().length < 12}>
+            <Check className="size-3.5" /> Simpan
+          </Button>
+        </div>
+      ) : null}
+      <p className="text-xs text-muted-foreground">Anggap ini seperti password. Jangan dibagikan ke publik.</p>
+    </div>
+  );
+}
+
+function McpCard({
+  configured,
+  token,
+  fromEnv,
+  appUrl,
+}: {
+  configured: boolean;
+  token: string;
+  fromEnv: boolean;
+  appUrl: string;
+}) {
+  const [origin, setOrigin] = useState(appUrl || "");
+  const [client, setClient] = useState<McpClient>("Claude Desktop");
+  useEffect(() => {
+    if (!appUrl && typeof window !== "undefined") setOrigin(window.location.origin);
+  }, [appUrl]);
+
+  const base = (origin || "https://app-kamu.com").replace(/\/$/, "");
+  const mcpUrl = `${base}/api/mcp`;
+  const realToken = token || "TOKEN-BELUM-DIBUAT";
+  const cfg = mcpConfigFor(client, mcpUrl, realToken);
 
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Link2 className="size-4 text-primary" /> Integrasi AI (MCP) — Claude / Codex
+            <Bot className="size-4 text-primary" /> Kendalikan lewat AI (MCP)
           </CardTitle>
-          {configured ? <Badge variant="success">Aktif</Badge> : <Badge variant="secondary">Set MCP_AUTH_TOKEN</Badge>}
+          {configured ? <Badge variant="success">Siap dipakai</Badge> : <Badge variant="warning">Belum aktif</Badge>}
         </div>
         <CardDescription>
-          Hubungkan ThreadsGrowth ke Claude Desktop / Claude Code agar bisa dikendalikan lewat AI. Set env{" "}
-          <code className="rounded bg-muted px-1">MCP_AUTH_TOKEN</code> lalu jalankan perintah ini.
+          Sambungkan ke asisten AI favoritmu, lalu cukup bilang &ldquo;buatkan 3 ide konten untuk akun X lalu
+          jadwalkan&rdquo; dan ia mengerjakannya di sini.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 rounded-lg border bg-muted/40 p-2">
-          <code className="min-w-0 flex-1 truncate px-1 text-xs">{snippet}</code>
-          <Button size="sm" variant="outline" onClick={copy}>
-            {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />} Salin
-          </Button>
+      <CardContent className="space-y-5">
+        <McpTokenManager token={token} fromEnv={fromEnv} />
+
+        {/* Client picker */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Pilih aplikasimu</p>
+          <div className="flex flex-wrap gap-2">
+            {MCP_CLIENTS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setClient(c)}
+                className={`rounded-lg border px-3 py-1.5 text-sm transition ${
+                  client === c ? "border-primary bg-primary/5 font-medium text-primary ring-1 ring-primary" : "hover:bg-accent"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Config for selected client */}
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            {cfg.file === "Terminal" ? "Jalankan perintah ini:" : `Tempel ke ${cfg.file}:`}
+          </p>
+          <CopyBlock text={cfg.text} label="Salin" />
+          <p className="text-xs text-muted-foreground">{cfg.note}</p>
+        </div>
+
+        {!configured ? (
+          <p className="rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+            Buat token dulu di atas. Config akan otomatis memakai token aslimu setelah dibuat.
+          </p>
+        ) : null}
+
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
-          <KeyRound className="size-3.5" /> Panduan lengkap (Claude Desktop, Vercel & Dokploy) ada di{" "}
-          <code className="rounded bg-muted px-1">docs/MCP.md</code>.
+          <KeyRound className="size-3.5 shrink-0" /> URL sudah otomatis ikut domainmu
+          {origin ? <code className="rounded bg-muted px-1">{base}</code> : null}. Panduan lengkap +
+          deploy ada di{" "}
+          <a href="/panduan#mcp" className="font-medium text-primary underline-offset-2 hover:underline">
+            Panduan
+          </a>
+          .
         </p>
       </CardContent>
     </Card>

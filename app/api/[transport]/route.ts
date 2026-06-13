@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getDefaultWorkspaceId } from "@/lib/mcp/workspace";
 import { getReplizClientForWorkspace } from "@/lib/repliz/resolve";
+import { getAiClientForWorkspace } from "@/lib/ai/resolve";
+import { generateEngagementComment } from "@/lib/ai/comment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -292,19 +294,118 @@ const mcpHandler = createMcpHandler(
         }
       },
     );
+
+    server.tool(
+      "seed_comments",
+      "Komentar antar akun: buat 'count' akun lain yang terhubung berkomentar di sebuah konten yang sudah tayang (engagement).",
+      { content_id: z.string(), count: z.number().int().min(1).max(20).optional() },
+      async ({ content_id, count }) => {
+        const sb = createServiceRoleClient();
+        const ws = await getDefaultWorkspaceId();
+        const { data: content } = await sb
+          .from("contents")
+          .select("body, account_id, status, suggested_comments, workspace_id")
+          .eq("id", content_id)
+          .maybeSingle();
+        if (!content || content.workspace_id !== ws) return ok({ error: "Konten tidak valid." });
+        if (content.status !== "posted") return ok({ error: "Konten harus sudah tayang." });
+
+        const { data: sched } = await sb
+          .from("schedules")
+          .select("repliz_content_id")
+          .eq("content_id", content_id)
+          .not("repliz_content_id", "is", null)
+          .order("posted_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!sched?.repliz_content_id) return ok({ error: "Konten belum punya ID Repliz." });
+
+        const want = Math.min(20, Math.max(1, count ?? 3));
+        const { data: others } = await sb
+          .from("accounts")
+          .select("id, repliz_account_id")
+          .eq("workspace_id", ws)
+          .neq("id", content.account_id)
+          .eq("status", "active")
+          .not("repliz_account_id", "is", null)
+          .limit(want);
+        if (!others || others.length === 0) return ok({ error: "Tidak ada akun lain yang terhubung." });
+
+        const repliz = await getReplizClientForWorkspace(ws);
+        if (!repliz) return ok({ error: "Kredensial Repliz belum diatur." });
+
+        const suggested = (content.suggested_comments ?? []).filter(Boolean);
+        let ai: Awaited<ReturnType<typeof getAiClientForWorkspace>> | null = null;
+        try {
+          ai = await getAiClientForWorkspace(ws);
+        } catch {
+          ai = null;
+        }
+        const FALLBACKS = ["Keren banget ini 🔥", "Setuju sih", "Makasih insight-nya!", "Bermanfaat banget", "Mantap!"];
+
+        let posted = 0;
+        for (let i = 0; i < others.length; i++) {
+          let text: string | undefined = suggested[i];
+          if (!text && ai) {
+            try {
+              const { data: persona } = await sb
+                .from("personas")
+                .select("name, tone, audience, niche")
+                .eq("account_id", others[i].id)
+                .order("is_default", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              text = await generateEngagementComment({ postBody: content.body, persona, client: ai });
+            } catch {
+              text = undefined;
+            }
+          }
+          if (!text) text = FALLBACKS[i % FALLBACKS.length];
+          try {
+            await repliz.commentOnContent(sched.repliz_content_id, text, others[i].repliz_account_id!);
+            posted++;
+          } catch {
+            // skip
+          }
+        }
+        return ok(posted > 0 ? { ok: true, posted, attempted: others.length } : { error: "Gagal mengirim komentar." });
+      },
+    );
   },
   {},
   { basePath: "/api" },
 );
 
+/**
+ * Resolve the effective MCP token. Priority:
+ * 1. `MCP_AUTH_TOKEN` env (locked, ops-managed).
+ * 2. The default workspace's `mcp_auth_token` (set/generated from the app UI).
+ */
+async function resolveMcpToken(): Promise<string | null> {
+  const envToken = process.env.MCP_AUTH_TOKEN;
+  if (envToken) return envToken;
+  try {
+    const sb = createServiceRoleClient();
+    const ws = await getDefaultWorkspaceId();
+    const { data } = await sb
+      .from("workspace_settings")
+      .select("mcp_auth_token")
+      .eq("workspace_id", ws)
+      .maybeSingle();
+    return data?.mcp_auth_token || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Bearer-token gate. Returns null when authorized, or a 401/503 Response. */
-function checkAuth(req: Request): Response | null {
-  const token = process.env.MCP_AUTH_TOKEN;
+async function checkAuth(req: Request): Promise<Response | null> {
+  const token = await resolveMcpToken();
   if (!token) {
-    return new Response(JSON.stringify({ error: "MCP not configured (set MCP_AUTH_TOKEN)" }), {
-      status: 503,
-      headers: { "content-type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "MCP belum diaktifkan. Set token di Pengaturan atau env MCP_AUTH_TOKEN." }),
+      { status: 503, headers: { "content-type": "application/json" } },
+    );
   }
   const auth = req.headers.get("authorization") ?? "";
   const provided = auth.replace(/^Bearer\s+/i, "");
@@ -318,7 +419,7 @@ function checkAuth(req: Request): Response | null {
 }
 
 async function guarded(req: Request) {
-  const denied = checkAuth(req);
+  const denied = await checkAuth(req);
   if (denied) return denied;
   return mcpHandler(req);
 }

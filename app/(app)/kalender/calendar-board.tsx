@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, GripVertical, X, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, GripVertical, X, FileText, Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { wibParts, wibToUtcIso, wibTimeLabel, currentWibMonthKey } from "@/lib/date";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { scheduleContent, rescheduleSchedule, cancelSchedule } from "./actions";
+import { ManualContentDialog, type GenAccount } from "./manual-content-dialog";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const WEEKDAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
@@ -34,14 +35,23 @@ export function CalendarBoard({
   monthKey,
   drafts,
   schedules,
+  accounts,
 }: {
   monthKey: string;
   drafts: DraftItem[];
   schedules: ScheduleItem[];
+  accounts: GenAccount[];
 }) {
   const [pending, startTransition] = useTransition();
   const [drag, setDrag] = useState<DragData | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [presetDate, setPresetDate] = useState<string | null>(null);
+
+  function openManual(dateKey?: string) {
+    setPresetDate(dateKey ?? null);
+    setManualOpen(true);
+  }
 
   const [year, month] = monthKey.split("-").map(Number); // month 1-12
 
@@ -98,15 +108,23 @@ export function CalendarBoard({
     <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
       {/* Draft panel */}
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Draf siap dijadwalkan</h2>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-muted-foreground">Draf siap dijadwalkan</h2>
+          <Button size="sm" variant="outline" onClick={() => openManual()}>
+            <Plus className="size-4" /> Buat konten
+          </Button>
+        </div>
         <p className="mb-3 text-xs text-muted-foreground">
-          Tarik kartu ke tanggal di kalender untuk menjadwalkan (default 08.00 WIB).
+          Tarik kartu ke tanggal untuk menjadwalkan (default 08.00 WIB), atau klik <span className="font-medium">Buat konten</span> untuk menulis/generate baru.
         </p>
         <div className="space-y-2">
           {drafts.length === 0 ? (
             <Card>
-              <CardContent className="p-4 text-sm text-muted-foreground">
-                Tidak ada draf. Buat konten di menu <span className="font-medium">Konten</span>.
+              <CardContent className="space-y-2 p-4 text-sm text-muted-foreground">
+                <p>Belum ada draf.</p>
+                <Button size="sm" onClick={() => openManual()}>
+                  <Sparkles className="size-4" /> Buat konten pertama
+                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -175,11 +193,22 @@ export function CalendarBoard({
                 onDragLeave={() => setOverKey((k) => (k === dateKey ? null : k))}
                 onDrop={() => onDrop(dateKey)}
                 className={cn(
-                  "min-h-28 bg-card p-1.5 transition-colors",
+                  "group/cell relative min-h-28 bg-card p-1.5 transition-colors",
                   isOver && "bg-primary/10 ring-1 ring-inset ring-primary",
                   pending && "opacity-70",
                 )}
               >
+                <button
+                  type="button"
+                  aria-label={`Buat konten untuk tanggal ${day}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openManual(dateKey);
+                  }}
+                  className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-md bg-primary/10 text-primary opacity-0 transition hover:bg-primary/20 focus-visible:opacity-100 group-hover/cell:opacity-100"
+                >
+                  <Plus className="size-3.5" />
+                </button>
                 <div
                   className={cn(
                     "mb-1 inline-flex size-6 items-center justify-center rounded-full text-xs",
@@ -203,10 +232,10 @@ export function CalendarBoard({
                           <button
                             type="button"
                             aria-label="Batalkan jadwal"
-                            className="opacity-0 transition group-hover:opacity-100"
+                            className="-m-1 flex size-6 items-center justify-center rounded transition hover:bg-destructive/10 sm:opacity-0 sm:group-hover:opacity-100"
                             onClick={() => run(() => cancelSchedule(s.id), "Jadwal dibatalkan.")}
                           >
-                            <X className="size-3 text-muted-foreground hover:text-destructive" />
+                            <X className="size-3.5 text-muted-foreground hover:text-destructive" />
                           </button>
                         )}
                       </div>
@@ -229,11 +258,23 @@ export function CalendarBoard({
             <EmptyState
               icon={FileText}
               title="Belum ada yang dijadwalkan"
-              description="Buat konten dulu di menu Konten, lalu tarik draf ke tanggal di kalender ini."
+              description="Buat konten langsung di sini, lalu tarik ke tanggal yang kamu mau."
+              action={
+                <Button onClick={() => openManual()}>
+                  <Plus className="size-4" /> Buat konten
+                </Button>
+              }
             />
           </div>
         ) : null}
       </div>
+
+      <ManualContentDialog
+        accounts={accounts}
+        open={manualOpen}
+        onOpenChange={setManualOpen}
+        presetDateKey={presetDate}
+      />
     </div>
   );
 }

@@ -5,11 +5,9 @@ import { PageHeader, SectionLabel } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { formatDateTimeWIB } from "@/lib/utils";
+import { ROLE_LABEL } from "@/lib/status";
 import { InviteManager, type InviteRow } from "./invite-manager";
 import { CredentialsCards } from "./credentials-cards";
-
-const ROLE_LABEL: Record<string, string> = { admin: "Admin", editor: "Editor", viewer: "Viewer" };
 
 export default async function PengaturanPage() {
   await getCurrentWorkspaceId();
@@ -28,7 +26,10 @@ export default async function PengaturanPage() {
   const [{ data: members }, { data: invites }, { data: replizCred }, { data: settings }] = await Promise.all([
     isAdmin ? supabase.rpc("list_members") : Promise.resolve({ data: [] as never[] }),
     isAdmin
-      ? supabase.from("invites").select("id, role, token, expires_at, accepted_at").order("created_at", { ascending: false })
+      ? supabase
+          .from("invites")
+          .select("id, role, token, email, expires_at, accepted_at")
+          .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] as never[] }),
     isAdmin
       ? supabase.from("repliz_credentials").select("username_enc").eq("is_default", true).maybeSingle()
@@ -36,12 +37,18 @@ export default async function PengaturanPage() {
     isAdmin
       ? supabase
           .from("workspace_settings")
-          .select("default_ai_provider, gemini_api_key, gemini_model, posts_per_day, auto_comment_count, daily_post_hour")
+          .select(
+            "default_ai_provider, gemini_api_key, gemini_model, posts_per_day, auto_comment_count, daily_post_hour, mcp_auth_token",
+          )
           .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
 
-  const mcpConfigured = Boolean(process.env.MCP_AUTH_TOKEN);
+  const envMcpToken = process.env.MCP_AUTH_TOKEN ?? "";
+  const mcpFromEnv = Boolean(envMcpToken);
+  const mcpToken = envMcpToken || settings?.mcp_auth_token || "";
+  const mcpConfigured = Boolean(mcpToken);
+  const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
 
   return (
     <>
@@ -77,6 +84,9 @@ export default async function PengaturanPage() {
             hasGeminiKey={Boolean(settings?.gemini_api_key)}
             geminiModel={settings?.gemini_model ?? null}
             mcpConfigured={mcpConfigured}
+            mcpToken={mcpToken}
+            mcpFromEnv={mcpFromEnv}
+            appUrl={appUrl}
             postsPerDay={settings?.posts_per_day ?? 3}
             autoCommentCount={settings?.auto_comment_count ?? 0}
             dailyPostHour={settings?.daily_post_hour ?? 8}
