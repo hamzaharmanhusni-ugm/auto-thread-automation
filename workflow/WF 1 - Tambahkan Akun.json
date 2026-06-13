@@ -1,0 +1,258 @@
+{
+  "name": "WF 1 - Tambahkan Akun",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        432,
+        48
+      ],
+      "id": "8bbae581-a6f1-41ac-91a6-89bec58ff363",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://api.repliz.com/public/account",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "page",
+              "value": "1"
+            },
+            {
+              "name": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        784,
+        48
+      ],
+      "id": "c67398e2-44c5-4ffc-bef2-f2c1aa54f760",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "FXw0ZEr4RK3iT2mB",
+          "name": "Repliz - Tim Mas Fikri"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Dapatkan Data Profil",
+        "height": 464,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        624,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "5fb148fa-e562-458e-9d50-f9e01b631062",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "docs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        48
+      ],
+      "id": "3e736064-0f0f-4c7c-98b6-5409976b23d4",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8c5be379-54ce-4747-8b3b-3c9516521481",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "threads",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        48
+      ],
+      "id": "394d2373-1bd6-4b28-9e1b-98d34a2806eb",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I",
+          "mode": "list",
+          "cachedResultName": "Konten Thread - Bhskin",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2090633475,
+          "mode": "list",
+          "cachedResultName": "Data User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I/edit#gid=2090633475"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID User": "={{ $json.userId }}",
+            "Nama User": "={{ $json.name }}"
+          },
+          "matchingColumns": [
+            "ID User"
+          ],
+          "schema": [
+            {
+              "id": "ID User",
+              "displayName": "ID User",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nama User",
+              "displayName": "Nama User",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Persona",
+              "displayName": "Persona",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1920,
+        -80
+      ],
+      "id": "9727d7a5-695b-4d36-a044-40d13432018f",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tdZB9ZggS1BqzTQg",
+          "name": "Master Credential"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "540ad955-44d2-41bb-8208-fda0846a28ad",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "61455e48d4395101a6e5470c870983c93ffc0510aea024469cb971495a5ee4fb"
+  },
+  "id": "P9AjS4SLM5xgc2tK",
+  "tags": []
+}

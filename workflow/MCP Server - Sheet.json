@@ -1,0 +1,263 @@
+{
+  "name": "MCP Server - Sheet",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "0c4c3bc9-fa93-4bcb-bcd6-fef6226524c0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -80
+      ],
+      "id": "62a43047-f5dc-4df6-9d65-99ab2d7b67d8",
+      "name": "MCP Server Trigger",
+      "webhookId": "0c4c3bc9-fa93-4bcb-bcd6-fef6226524c0"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I",
+          "mode": "list",
+          "cachedResultName": "Konten Thread - Bhskin",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Konten Thread",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -240,
+        144
+      ],
+      "id": "873f46aa-c0c6-4994-aecf-4c967c6fce41",
+      "name": "Baca Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tdZB9ZggS1BqzTQg",
+          "name": "Master Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I",
+          "mode": "list",
+          "cachedResultName": "Konten Thread - Bhskin",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Konten Thread",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1T53GsMvCcka1wy-8nWu761bx7tOU5aXg0godKvQjs3I/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "waktu generate": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('waktu_generate', ``, 'string') }}",
+            "niche": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('niche', ``, 'string') }}",
+            "topic": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('topic', ``, 'string') }}",
+            "hook": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('hook', ``, 'string') }}",
+            "content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('content', ``, 'string') }}",
+            "CTA": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('CTA', ``, 'string') }}",
+            "emotion_type": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('emotion_type', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "waktu generate",
+              "displayName": "waktu generate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "account_name",
+              "displayName": "account_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "hook",
+              "displayName": "hook",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CTA",
+              "displayName": "CTA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "emotion_type",
+              "displayName": "emotion_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_model",
+              "displayName": "ai_model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "thread_url",
+              "displayName": "thread_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "waktu publish",
+              "displayName": "waktu publish",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -64,
+        160
+      ],
+      "id": "2cf1ca4f-226a-42c5-992b-b673cf677cdb",
+      "name": "Tambahkan Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tdZB9ZggS1BqzTQg",
+          "name": "Master Credential"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Baca Data": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tambahkan Data": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2de4a8b7-d69e-4ad9-8af8-4a4b9189882c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "61455e48d4395101a6e5470c870983c93ffc0510aea024469cb971495a5ee4fb"
+  },
+  "id": "EUZY7v1aqviBC3gW",
+  "tags": []
+}

@@ -1,0 +1,708 @@
+{
+  "name": "WF1 - n8n MCP Server - Riset Ide Konten",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "0c84b69e-b488-458b-93d9-1709017be4d1"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -96
+      ],
+      "id": "87ea3466-dccf-4623-8cfe-ded54031d09e",
+      "name": "MCP Server Trigger",
+      "webhookId": "0c84b69e-b488-458b-93d9-1709017be4d1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI",
+          "mode": "list",
+          "cachedResultName": "n8n Threads Contents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Persona",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -64,
+        224
+      ],
+      "id": "e189769e-2b8b-48db-8049-028d9536882e",
+      "name": "Baca Persona",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Tool disini untuk jadwalkan konten, dimana nanti perlu baca akun persona kemudiann nanti tambahkan data yag diperlukan.  Ingat schedulenya formanya adalah ",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI",
+          "mode": "list",
+          "cachedResultName": "n8n Threads Contents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 975653450,
+          "mode": "list",
+          "cachedResultName": "Konten",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit#gid=975653450"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Content ID": "=",
+            "Content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Content', ``, 'string') }}",
+            "ID Account": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ID_Account', ``, 'string') }}",
+            "Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Name', ``, 'string') }}",
+            "Schedule": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Schedule', ``, 'string') }}",
+            "Title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Title', ``, 'string') }}",
+            "Persona": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Persona', ``, 'string') }}",
+            "Tipe": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Tipe', `Tipe adalah Single/Nested`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID Account",
+              "displayName": "ID Account",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Persona",
+              "displayName": "Persona",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content ID",
+              "displayName": "Content ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Schedule",
+              "displayName": "Schedule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Tipe",
+              "displayName": "Tipe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        512,
+        256
+      ],
+      "id": "d6587f77-d3c6-4d2f-b979-6b2015544b87",
+      "name": "Tambahkan Kontennya",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Untuk dapatkan templatenya",
+        "documentId": {
+          "__rl": true,
+          "value": "1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI",
+          "mode": "list",
+          "cachedResultName": "n8n Threads Contents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 975653450,
+          "mode": "list",
+          "cachedResultName": "Konten",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit#gid=975653450"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "ID Account",
+              "lookupValue": "Template Data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        272
+      ],
+      "id": "5c517e54-8f5e-41af-9c9a-bd61823638e5",
+      "name": "Dapatkan Template",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "batasan",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        560
+      ],
+      "id": "1ec94583-d1ca-4f29-ad0f-8be1fc4aa3aa",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "maxItems": "={{ $('When Executed by Another Workflow').item.json.batasan }}",
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        656,
+        560
+      ],
+      "id": "89323ecb-a5c8-4758-9900-2b8948a3efac",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI",
+          "mode": "list",
+          "cachedResultName": "n8n Threads Contents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 975653450,
+          "mode": "list",
+          "cachedResultName": "Konten",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit#gid=975653450"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        560
+      ],
+      "id": "76823a20-9ea3-4299-adf5-9ef88ee9c935",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "LhxfHqdeHKYWYRdB",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/LhxfHqdeHKYWYRdB",
+          "cachedResultName": "WF1 - n8n MCP Server - Riset Ide Konten"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "batasan": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('batasan', `Ini adalah angka dari 5-20. Jika butuh baca data konten maksimal 20 sebagai referensi`, 'string') }}"
+          },
+          "matchingColumns": [
+            "batasan"
+          ],
+          "schema": [
+            {
+              "id": "batasan",
+              "displayName": "batasan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        288
+      ],
+      "id": "d9b40f56-0b8a-49c2-8bfd-fefbcd671cd7",
+      "name": "Baca Konten Terbatas"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI",
+          "mode": "list",
+          "cachedResultName": "n8n Threads Contents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 975653450,
+          "mode": "list",
+          "cachedResultName": "Konten",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit#gid=975653450"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRange",
+              "firstDataRow": 3
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        320,
+        272
+      ],
+      "id": "cc4f73d4-0444-4c27-957e-9a5a3074eac2",
+      "name": "Baca Semua Konten",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Tambahkan Komentar yang berpotensi viral (abaikan sifat personanya)",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI",
+          "mode": "list",
+          "cachedResultName": "n8n Threads Contents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 975653450,
+          "mode": "list",
+          "cachedResultName": "Konten",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit#gid=975653450"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": 0,
+            "Content ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Content_ID', ``, 'string') }}",
+            "Komen 1": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Komen_1', ``, 'string') }}",
+            "Komen 2": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Komen_2', ``, 'string') }}",
+            "Komen 3": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Komen_3', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Content ID"
+          ],
+          "schema": [
+            {
+              "id": "ID Account",
+              "displayName": "ID Account",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Persona",
+              "displayName": "Persona",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Content ID",
+              "displayName": "Content ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Schedule",
+              "displayName": "Schedule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Tipe",
+              "displayName": "Tipe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Komen 1",
+              "displayName": "Komen 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Komen 2",
+              "displayName": "Komen 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Komen 3",
+              "displayName": "Komen 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        256
+      ],
+      "id": "19a84dce-5f24-44dd-8a99-907425e3e8fc",
+      "name": "Tambahkan Komentar",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "batasan": 5
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Baca Persona": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tambahkan Kontennya": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dapatkan Template": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        []
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baca Konten Terbatas": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baca Semua Konten": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tambahkan Komentar": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3e48ec5a-4f29-4679-bcaf-c24b15ca571c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ada8108924d96edddba5592610637517a833329dc6bd8783ce32d4de15f3fa66"
+  },
+  "id": "LhxfHqdeHKYWYRdB",
+  "tags": []
+}

@@ -1,0 +1,792 @@
+{
+  "name": "WF3 - Automation Thread - Auto Comment",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF3 - Automation Thread - Auto Comment\n\n**Tujuan:** Menerima notifikasi dari Repliz API dan merespons otomatis sesuai tipe event.\n\n**Trigger:** POST Webhook dari Repliz\n\n**Alur Utama:**\nRepliz --> Webhook --> Switch (routing) --> Proses sesuai tipe\n\n**3 Tipe Event yang Ditangani:**\n- comment : Ada user komen -> AI balas otomatis\n- schedule : Konten dipost -> Update status di Google Sheet\n- chat : Chat masuk (routing tersedia, belum ada handler aktif)\n\n**Catatan:** Workflow ini aktif dan berjalan production.",
+        "height": 420,
+        "width": 560,
+        "color": 7
+      },
+      "id": "8d011605-10ce-4775-a136-5c3dd96c9d39",
+      "name": "Sticky Note cdda3f1e",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2096,
+        -1248
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## BRANCH: Auto Comment (type = comment)\n\n**Triggered saat:** Ada user mengomentari thread di Repliz\n\n**Alur Step-by-Step:**\n1. Switch deteksi body.type == comment\n2. Get row(s) in sheet1\n   -> Ambil data Persona dari Google Sheets (Sheet1)\n   -> Filter: ID Account == accountId dari webhook\n3. AI Agent1 -> Generate balasan komentar natural\n   -> Model: Google Gemini\n   -> Memory: Buffer per content.id (jaga konteks percakapan)\n   -> Persona: disesuaikan dari data sheet\n   -> Output: Teks balasan saja, tanpa markdown/tanda kutip\n4. HTTP Request -> POST balasan ke Repliz\n   -> Endpoint: POST /public/comment/{comment_id}\n   -> Body: { text: hasil_AI }\n\n**Catatan Penting:**\n- Simple Memory menyimpan histori percakapan per konten\n- AI diarahkan tidak balas generik seperti Terima kasih kak atau Mantap",
+        "height": 784,
+        "width": 944,
+        "color": 3
+      },
+      "id": "e8829039-f07e-4ad1-9777-8bb9eab02a30",
+      "name": "Sticky Note 7b7f666b",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1328,
+        -1216
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## BRANCH: Update Status (type = schedule)\n\n**Triggered saat:** Repliz kirim notifikasi bahwa konten berhasil diposting sesuai jadwal\n\n**Alur:**\n1. Switch deteksi body.type == schedule\n2. Update row in sheet -> Update status di Google Sheets\n   -> Sheet: n8n Threads Contents (Sheet2)\n   -> Match by: Content ID\n   -> Update field: Status -> Sudah Dipost\n\n**Tujuan:** Melacak konten yang sudah dipost agar tidak dijadwalkan ulang atau duplikasi.",
+        "height": 310,
+        "width": 600,
+        "color": 4
+      },
+      "id": "12a1662f-cc98-4b17-9335-aaa8eee5744f",
+      "name": "Sticky Note 621b68ff",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1504,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## DISABLED NODES (Legacy / Tidak Aktif)\n\nNode-node berikut TIDAK aktif dan tidak digunakan dalam alur saat ini:\n\n- Get row(s) in sheet: Versi lama pengambil data sheet (diganti Get row(s) in sheet1)\n- AI Agent: Versi lama tanpa memory (diganti AI Agent1 yang lebih baik)\n- Google Gemini Chat Model: Model untuk AI Agent lama\n- Auto Comment: Pengiriman lama via /schedule endpoint (bukan /comment)\n\nBisa dihapus jika sudah tidak diperlukan sebagai referensi.",
+        "height": 416,
+        "width": 700,
+        "color": 2
+      },
+      "id": "a24f5ca8-9218-447a-9d2b-09d99558a154",
+      "name": "Sticky Note 24b85001",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d41e6979-05ef-4276-ba7c-fd469cdd26ad",
+        "options": {}
+      },
+      "id": "9e1711c2-c8b0-4c71-a905-1c64c7e9025d",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2064,
+        -128
+      ],
+      "webhookId": "d41e6979-05ef-4276-ba7c-fd469cdd26ad"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "comment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "8d6ff41e-27d5-4e68-87e7-3b3a9395b760"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Comment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a13be87a-4667-4318-a0e5-58c51228049d",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "schedule",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Schedule"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "80b3b38b-fbce-4724-b74f-a9e5b2bf4b59",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Chat"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7d59515b-0025-4d1f-b052-22d1e890139e",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1744,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI",
+          "mode": "list",
+          "cachedResultName": "n8n Threads Contents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "ID Account",
+              "lookupValue": "={{ $json.body.accountId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c08f5508-8f72-420b-8c0a-3aee0b46d5ee",
+      "name": "Get row(s) in sheet1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1264,
+        -320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User yang komen : {{ $('Switch').item.json.body.data.comment.owner.name }}\nKomentarnya :  (jika kosong, coba cek gambar)\n{{ $('Switch').item.json.body.data.comment.text }}\n\nYang dikomentari : \n{{ $('Switch').item.json.body.data.content.description }}",
+        "options": {
+          "systemMessage": "=Kamu adalah seorang Comment Reply Specialist untuk topik {{ $json.Persona }}.\n\nTugas kamu adalah membalas komentar user yang membalas thread atau komentar sebelumnya.\n\nAturan membalas:\n* Gunakan bahasa yang natural, santai, dan manusiawi\n* Hindari jawaban generik seperti Terima kasih kak, Betul sekali, Mantap\n* Balasan harus kontekstual terhadap komentar user\n* Jika user bertanya jawab dengan jelas dan singkat\n* Jangan terlalu formal dan jangan terlalu panjang (1-3 kalimat)\n* Hindari emoji berlebihan\n* Gunakan gaya komunikasi sesuai Persona {{ $json.Persona }}\n* Komentari gambar jika tidak ada teks\n\nOutput:\nBerikan HANYA isi balasan komentar tanpa tambahan penjelasan, tanpa tanda kutip, dan tanpa format markdown.\n",
+          "passthroughBinaryImages": true
+        }
+      },
+      "id": "d38838bd-287f-47ba-8120-a55398f5bae1",
+      "name": "AI Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -576,
+        -384
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6655c57c-13f2-4828-993f-5d26eb89da2c",
+      "name": "Google Gemini Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -688,
+        -80
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NDpZ84DF9gxOCM0W",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Switch').item.json.body.data.content.id }}"
+      },
+      "id": "4cf8ff4e-e4a9-4162-b129-7be559504676",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -400,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.repliz.com/public/comment/{{ $('Webhook').item.json.body.data.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a0f4bed5-49b1-4a97-bbf6-537c45e77110",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -112,
+        -368
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "3QofL3FawuZsJSOD",
+          "name": "Repliz"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI",
+          "mode": "list",
+          "cachedResultName": "n8n Threads Contents",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 975653450,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nPBlJGeF1qQyXRclBnEkPGqVjeMbXO05wTbCNnFJonI/edit#gid=975653450"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Content ID": "={{ $json.body.data.id }}",
+            "Status": "Sudah Dipost"
+          },
+          "matchingColumns": [
+            "Content ID"
+          ],
+          "schema": [
+            {
+              "id": "ID Account",
+              "displayName": "ID Account",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Persona",
+              "displayName": "Persona",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Content ID",
+              "displayName": "Content ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Schedule",
+              "displayName": "Schedule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ec97d23a-ed37-4509-a3c2-96552b316d1c",
+      "name": "Update row in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1232,
+        -16
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "b98e5e5f-3e63-41fa-9d4d-3b74ca563786",
+      "name": "Get row(s) in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1120,
+        848
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y5JhZNPqGU7SDP1R",
+          "name": "Google Sheets account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Komment\n\nKonten : \n{{ $json.body.data.content.description }}\n\nKomment : \n{{ $json.body.data.comment.text }}",
+        "options": {}
+      },
+      "id": "0b3eb8a3-f07f-406c-95d0-c81dd24068f1",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -672,
+        848
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6f65e6c1-cfe9-4f3c-a617-993f24788721",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        1056
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NDpZ84DF9gxOCM0W",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.repliz.com/public/schedule",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{ $('Get row(s) in sheet').item.json.Title }}\",\n  \"description\": {{ JSON.stringify($json.content_clean) }},\n  \"medias\": [],\n  \"topic\": \"lifestyle\",\n  \"type\": \"text\",\n  \"accountId\": \"{{ $('Get row(s) in sheet').item.json['ID Account'] }}\",\n  \"scheduleAt\": \"{{ $json.schedule_at }}\"\n}",
+        "options": {}
+      },
+      "id": "ba9770a6-d26c-4a49-a42a-1197018ed8b6",
+      "name": "Auto Comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -320,
+        848
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "3QofL3FawuZsJSOD",
+          "name": "Repliz"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "08e491d1-b0d9-44fd-b819-d3b1f2e97fe5",
+              "leftValue": "={{ $('Webhook').item.json.body.data.comment.type }}",
+              "rightValue": "image",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1088,
+        -320
+      ],
+      "id": "430ed93c-bad3-442e-8de4-a958b135631a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Webhook').item.json.body.data.comment.medias[0].url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -864,
+        -384
+      ],
+      "id": "83e3d56a-314e-4833-a81d-dd3218fd7b67",
+      "name": "HTTP Request1"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-dbbsgqhfxv4v.jkt6.sumopod.my.id",
+            "user-agent": "axios/1.13.6",
+            "content-length": "2090",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1",
+            "cf-connecting-ip": "64.176.82.71",
+            "cf-ipcountry": "SG",
+            "cf-ray": "a0338d1e3ae5f930-SIN",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "content-type": "application/json",
+            "x-forwarded-for": "64.176.82.71, 172.68.164.126",
+            "x-forwarded-host": "n8n-dbbsgqhfxv4v.jkt6.sumopod.my.id",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "ef3c5133ced4",
+            "x-real-ip": "172.68.164.126",
+            "x-token": ""
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "platform": "threads",
+            "type": "comment",
+            "accountId": "69fbf808877ca2e45403d701",
+            "data": {
+              "status": "pending",
+              "content": {
+                "id": "18169607464422244",
+                "title": "",
+                "description": "Ada yang namanya dopamine detox. Dan bukan berarti kamu harus jadi biksu atau cabut semua aplikasi. 🧵",
+                "topic": "Lifestyle",
+                "type": "text",
+                "owner": {
+                  "id": "27331823149742824",
+                  "name": "Claudiasvna",
+                  "picture": "https://scontent-sin6-3.cdninstagram.com/v/t51.82787-19/670466536_17916684186346501_1101043289864311426_n.jpg?stp=dst-jpg_s206x206_tt6&_nc_cat=110&ccb=7-5&_nc_sid=30ff31&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy5DMyJ9&_nc_ohc=yAjL3e2Pe1IQ7kNvwHw6GaI&_nc_oc=Adpkf1uKMhvFfeXuZPpTdR31ZHnzoFV5T54Lig6pcovMc_yKBjPRHg135crkxN0iFvs&_nc_zt=24&_nc_ht=scontent-sin6-3.cdninstagram.com&edm=AP4hL3IEAAAA&_nc_gid=ChOnYOc2Uum0qH14npHeVw&_nc_tpa=Q5bMBQGxfiP8amT3FTqU5shesa39r7D-YBBgBGoUd-RSPmi-aumtm2LhaSczTEVHcZbDz4MuMDNH4C1TEA&oh=00_Af4nHyJTOv41AvbcNm-HhuY7iCnxTyHNvBrXNq360vZTXw&oe=6A1EFAB3"
+                },
+                "medias": [],
+                "url": "https://www.threads.com/@claudiasvna/post/DY50Fwdk-UK",
+                "createdAt": "2026-05-29T01:00:12.000Z"
+              },
+              "comment": {
+                "id": "18004002635749056",
+                "type": "text",
+                "text": "Saya pernah kak",
+                "owner": {
+                  "id": "",
+                  "name": "aijen.id",
+                  "picture": "https://scontent-sin6-3.cdninstagram.com/v/t51.82787-19/684458931_18100694476891942_476522657810609111_n.jpg?stp=dst-jpg_s206x206_tt6&_nc_cat=110&ccb=7-5&_nc_sid=30ff31&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLnd3dy5DMyJ9&_nc_ohc=273QdKhhJZEQ7kNvwH4ilZX&_nc_oc=Adp9O01qsWTKI6Al9Pk35RW-lvxVIQPTMg66t3c1G74PULODOHnJzJmen1c7oMMzGp4&_nc_zt=24&_nc_ht=scontent-sin6-3.cdninstagram.com&edm=ANQ71j8EAAAA&_nc_gid=QnxwGgj77DlirsxiOaQQuw&_nc_tpa=Q5bMBQEDd4h1J99KXWY2-3gDEL2ttZv91yy-q0tRfux445hEt9qrGwbX9JEszR_udvciq1CxytGWLKbrPA&oh=00_Af5hQyMX7UwJQb2LQ6dtmTrjhkXrUc_U0Thb2NA2f2jaHw&oe=6A1F16CF"
+                },
+                "medias": [],
+                "createdAt": "2026-05-29T06:47:53.000Z",
+                "hasReplies": false,
+                "replies": []
+              },
+              "accountId": "69fbf808877ca2e45403d701",
+              "userId": "69f8c767cf6ea67c4f4f5d69",
+              "createdAt": "2026-05-29T06:48:03.504Z",
+              "updatedAt": "2026-05-29T06:48:03.504Z",
+              "_id": "6a1936a33ca4a41add0c8cbc",
+              "__v": 0,
+              "id": "6a1936a33ca4a41add0c8cbc"
+            }
+          },
+          "webhookUrl": "https://n8n-dbbsgqhfxv4v.jkt6.sumopod.my.id/webhook/d41e6979-05ef-4276-ba7c-fd469cdd26ad",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "e9b17769-ebfa-492d-af13-51d7b1b78c43",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "ada8108924d96edddba5592610637517a833329dc6bd8783ce32d4de15f3fa66"
+  },
+  "id": "Ws0wFf9k46hsGuVs",
+  "tags": []
+}
