@@ -1083,6 +1083,7 @@ export type Database = {
           auto_comment_max_minutes: number
           auto_comment_min_minutes: number
           created_at: string
+          cron_secret: string | null
           daily_post_hour: number
           default_ai_provider: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key: string | null
@@ -1101,6 +1102,7 @@ export type Database = {
           auto_comment_max_minutes?: number
           auto_comment_min_minutes?: number
           created_at?: string
+          cron_secret?: string | null
           daily_post_hour?: number
           default_ai_provider?: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key?: string | null
@@ -1119,6 +1121,7 @@ export type Database = {
           auto_comment_max_minutes?: number
           auto_comment_min_minutes?: number
           created_at?: string
+          cron_secret?: string | null
           daily_post_hour?: number
           default_ai_provider?: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key?: string | null

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getReplizClientForWorkspace } from "@/lib/repliz/resolve";
 import { getAiClientForWorkspace } from "@/lib/ai/resolve";
 import { generateEngagementComment } from "@/lib/ai/comment";
+import { getDefaultWorkspaceId } from "@/lib/mcp/workspace";
 import type { ReplizClient } from "@/lib/repliz/client";
 import type { AiClient } from "@/lib/ai/provider";
 
@@ -18,10 +19,26 @@ const BATCH = 25;
  * staggered timing. Called by Vercel Cron (or pg_cron) every minute.
  * Auth: `Authorization: Bearer <CRON_SECRET>` (Vercel cron) or `?key=<CRON_SECRET>`.
  */
+/** Effective cron secret: env first, else the default workspace's UI-set value. */
+async function resolveCronSecret(sb: ReturnType<typeof createServiceRoleClient>): Promise<string | null> {
+  if (process.env.CRON_SECRET) return process.env.CRON_SECRET;
+  try {
+    const ws = await getDefaultWorkspaceId();
+    const { data } = await sb.from("workspace_settings").select("cron_secret").eq("workspace_id", ws).maybeSingle();
+    return data?.cron_secret || null;
+  } catch {
+    return null;
+  }
+}
+
 async function run(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
+  const sb = createServiceRoleClient();
+  const secret = await resolveCronSecret(sb);
   if (!secret) {
-    return NextResponse.json({ error: "CRON_SECRET belum diset" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Cron belum aktif. Set CRON_SECRET (env) atau buat token di Pengaturan." },
+      { status: 503 },
+    );
   }
   const auth = req.headers.get("authorization") ?? "";
   const provided = auth.replace(/^Bearer\s+/i, "") || req.nextUrl.searchParams.get("key") || "";
@@ -29,7 +46,6 @@ async function run(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const sb = createServiceRoleClient();
   const nowIso = new Date().toISOString();
   const { data: jobs } = await sb
     .from("auto_comment_jobs")

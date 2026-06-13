@@ -43,6 +43,40 @@ export async function saveMcpToken(token: string): Promise<Result> {
   return { ok: true };
 }
 
+/** Auto-generate a cron token for the auto-comment runner (used when env CRON_SECRET is unset). */
+export async function generateCronSecret(): Promise<{ ok: boolean; token?: string; error?: string }> {
+  if (process.env.CRON_SECRET) {
+    return { ok: false, error: "Token sudah diatur lewat environment (.env), tidak bisa diubah dari sini." };
+  }
+  const ws = await getCurrentWorkspaceId();
+  const sb = await createClient();
+  const token = `cron_${randomBytes(24).toString("base64url")}`;
+  const { error } = await sb
+    .from("workspace_settings")
+    .upsert({ workspace_id: ws, cron_secret: token }, { onConflict: "workspace_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pengaturan");
+  return { ok: true, token };
+}
+
+/** Save a manually-typed cron token for the auto-comment runner. */
+export async function saveCronSecret(token: string): Promise<Result> {
+  if (process.env.CRON_SECRET) {
+    return { ok: false, error: "Token sudah diatur lewat environment (.env), tidak bisa diubah dari sini." };
+  }
+  const ws = await getCurrentWorkspaceId();
+  const sb = await createClient();
+  const t = token.trim();
+  if (t.length < 12) return { ok: false, error: "Token minimal 12 karakter agar aman." };
+  if (/\s/.test(t)) return { ok: false, error: "Token tidak boleh mengandung spasi." };
+  const { error } = await sb
+    .from("workspace_settings")
+    .upsert({ workspace_id: ws, cron_secret: t }, { onConflict: "workspace_id" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pengaturan");
+  return { ok: true };
+}
+
 /** Save the workspace's Repliz username/password (used for schedule + auto-comment). */
 export async function saveReplizCredentials(username: string, password: string): Promise<Result> {
   const ws = await getCurrentWorkspaceId();

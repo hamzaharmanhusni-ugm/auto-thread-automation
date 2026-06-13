@@ -128,7 +128,9 @@ MCP otomatis tersedia di domain yang sama dengan app, baik di Vercel maupun Dokp
 
 Supaya komentar antar akun terkirim otomatis dengan jeda acak yang natural setelah konten tayang:
 
-1. Set env **`CRON_SECRET`** (string acak panjang) di hosting.
+1. Siapkan **token cron**. Dua cara:
+   - Set env **`CRON_SECRET`** (string acak panjang) di hosting, **atau**
+   - Buat dari UI: **Pengaturan → Otomasi → "Token cron" → Generate otomatis** (dipakai untuk pg_cron / pemanggilan manual `?key=`).
 2. Nyalakan di app: **Pengaturan → Otomasi → "Komentar antar akun otomatis saat tayang"**, atur jeda (mis. 2 sampai 8 menit) dan jumlah akun.
 3. Pastikan **webhook Repliz** terpasang (bagian C) — itu pemicu saat konten benar-benar tayang.
 4. Aktifkan runner tiap menit:
@@ -137,7 +139,7 @@ Supaya komentar antar akun terkirim otomatis dengan jeda acak yang natural setel
 ```json
 { "crons": [{ "path": "/api/cron/auto-comment", "schedule": "* * * * *" }] }
 ```
-Vercel Cron otomatis mengirim header `Authorization: Bearer <CRON_SECRET>`. Catatan: paket **Hobby** membatasi cron 1x/hari; untuk per-menit pakai paket **Pro**, atau gunakan pg_cron di bawah.
+Vercel Cron otomatis mengirim header `Authorization: Bearer <CRON_SECRET>`, jadi untuk Vercel Cron **token harus di env** `CRON_SECRET` (bukan yang dari UI). Catatan: paket **Hobby** membatasi cron 1x/hari; untuk per-menit pakai paket **Pro**, atau gunakan pg_cron di bawah (yang bisa pakai token dari UI).
 
 **Supabase pg_cron / Dokploy** (alternatif, per menit):
 ```sql

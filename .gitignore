@@ -39,3 +39,4 @@ yarn-error.log*
 /.playwright-mcp/
 /.dev-server.log
 .claude/settings.local.json
+.mcp.json

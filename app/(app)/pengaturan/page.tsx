@@ -38,7 +38,7 @@ export default async function PengaturanPage() {
       ? supabase
           .from("workspace_settings")
           .select(
-            "default_ai_provider, gemini_api_key, gemini_model, posts_per_day, auto_comment_count, daily_post_hour, mcp_auth_token, auto_comment_enabled, auto_comment_min_minutes, auto_comment_max_minutes",
+            "default_ai_provider, gemini_api_key, gemini_model, posts_per_day, auto_comment_count, daily_post_hour, mcp_auth_token, auto_comment_enabled, auto_comment_min_minutes, auto_comment_max_minutes, cron_secret",
           )
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -49,6 +49,10 @@ export default async function PengaturanPage() {
   const mcpToken = envMcpToken || settings?.mcp_auth_token || "";
   const mcpConfigured = Boolean(mcpToken);
   const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
+
+  const envCron = process.env.CRON_SECRET ?? "";
+  const cronFromEnv = Boolean(envCron);
+  const cronToken = envCron || settings?.cron_secret || "";
 
   return (
     <>
@@ -93,6 +97,8 @@ export default async function PengaturanPage() {
             autoCommentEnabled={settings?.auto_comment_enabled ?? false}
             autoCommentMinMinutes={settings?.auto_comment_min_minutes ?? 2}
             autoCommentMaxMinutes={settings?.auto_comment_max_minutes ?? 8}
+            cronToken={cronToken}
+            cronFromEnv={cronFromEnv}
           />
 
           <SectionLabel>Tim</SectionLabel>

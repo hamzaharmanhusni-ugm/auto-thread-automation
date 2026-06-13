@@ -15,6 +15,8 @@ import {
   saveAutomationSettings,
   generateMcpToken,
   saveMcpToken,
+  generateCronSecret,
+  saveCronSecret,
 } from "./settings-actions";
 
 function SecretInput({
@@ -80,6 +82,8 @@ export function CredentialsCards({
   autoCommentEnabled,
   autoCommentMinMinutes,
   autoCommentMaxMinutes,
+  cronToken,
+  cronFromEnv,
 }: {
   hasReplizCreds: boolean;
   replizUsername: string | null;
@@ -96,6 +100,8 @@ export function CredentialsCards({
   autoCommentEnabled: boolean;
   autoCommentMinMinutes: number;
   autoCommentMaxMinutes: number;
+  cronToken: string;
+  cronFromEnv: boolean;
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -108,6 +114,8 @@ export function CredentialsCards({
         autoCommentEnabled={autoCommentEnabled}
         autoCommentMinMinutes={autoCommentMinMinutes}
         autoCommentMaxMinutes={autoCommentMaxMinutes}
+        cronToken={cronToken}
+        cronFromEnv={cronFromEnv}
       />
       <McpCard configured={mcpConfigured} token={mcpToken} fromEnv={mcpFromEnv} appUrl={appUrl} />
     </div>
@@ -132,6 +140,8 @@ function AutomationCard({
   autoCommentEnabled,
   autoCommentMinMinutes,
   autoCommentMaxMinutes,
+  cronToken,
+  cronFromEnv,
 }: {
   postsPerDay: number;
   autoCommentCount: number;
@@ -139,6 +149,8 @@ function AutomationCard({
   autoCommentEnabled: boolean;
   autoCommentMinMinutes: number;
   autoCommentMaxMinutes: number;
+  cronToken: string;
+  cronFromEnv: boolean;
 }) {
   const [ppd, setPpd] = useState(postsPerDay);
   const [acc, setAcc] = useState(autoCommentCount);
@@ -238,6 +250,7 @@ function AutomationCard({
               </Field>
             </div>
           ) : null}
+          {autoOn ? <CronSecretManager token={cronToken} fromEnv={cronFromEnv} /> : null}
           <p className="text-xs text-muted-foreground">Butuh cron aktif. Lihat Panduan untuk setup.</p>
         </div>
 
@@ -472,6 +485,92 @@ function McpTokenManager({ token, fromEnv }: { token: string; fromEnv: boolean }
         </div>
       ) : null}
       <p className="text-xs text-muted-foreground">Anggap ini seperti password. Jangan dibagikan ke publik.</p>
+    </div>
+  );
+}
+
+function CronSecretManager({ token, fromEnv }: { token: string; fromEnv: boolean }) {
+  const [current, setCurrent] = useState(token);
+  const [manual, setManual] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [pending, start] = useTransition();
+
+  function gen() {
+    start(async () => {
+      const res = await generateCronSecret();
+      if (res.ok && res.token) {
+        setCurrent(res.token);
+        toast.success("Token cron dibuat & disimpan.");
+      } else toast.error(res.error ?? "Gagal membuat token.");
+    });
+  }
+  function saveManual() {
+    start(async () => {
+      const res = await saveCronSecret(manual);
+      if (res.ok) {
+        setCurrent(manual.trim());
+        setManual("");
+        setEditing(false);
+        toast.success("Token cron disimpan.");
+      } else toast.error(res.error ?? "Gagal menyimpan token.");
+    });
+  }
+
+  if (fromEnv) {
+    return (
+      <div className="space-y-1.5 border-t pt-2">
+        <p className="text-xs font-medium">Token cron</p>
+        <CopyBlock text={current} label="Salin" />
+        <p className="text-xs text-muted-foreground">
+          Diatur lewat environment (<code className="rounded bg-muted px-1">CRON_SECRET</code>), terkunci dari sini.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 border-t pt-2">
+      <p className="text-xs font-medium">Token cron (untuk runner auto-comment)</p>
+      {current ? (
+        <>
+          <CopyBlock text={current} label="Salin" />
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={gen} disabled={pending}>
+              {pending ? <Loader2 className="size-3.5 animate-spin" /> : <KeyRound className="size-3.5" />} Generate ulang
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setEditing((e) => !e)} disabled={pending}>
+              Isi manual
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={gen} disabled={pending}>
+            {pending ? <Loader2 className="size-3.5 animate-spin" /> : <KeyRound className="size-3.5" />} Generate
+            otomatis
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setEditing((e) => !e)} disabled={pending}>
+            Isi manual
+          </Button>
+        </div>
+      )}
+      {editing ? (
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <input
+            value={manual}
+            onChange={(e) => setManual(e.target.value)}
+            placeholder="token-rahasia-minimal-12-karakter"
+            className="h-9 min-w-0 flex-1 rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+          />
+          <Button size="sm" onClick={saveManual} disabled={pending || manual.trim().length < 12}>
+            <Check className="size-3.5" /> Simpan
+          </Button>
+        </div>
+      ) : null}
+      <p className="text-xs text-muted-foreground">
+        Pakai token ini di pemanggil cron (pg_cron / manual <code className="rounded bg-muted px-1">?key=</code>). Untuk
+        Vercel Cron, set juga <code className="rounded bg-muted px-1">CRON_SECRET</code> di env.
+      </p>
     </div>
   );
 }
