@@ -158,6 +158,54 @@ export type Database = {
           },
         ]
       }
+      auto_comment_jobs: {
+        Row: {
+          attempts: number
+          comment_text: string | null
+          commenter_account_id: string
+          content_id: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          repliz_account_id: string
+          repliz_content_id: string
+          run_at: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          attempts?: number
+          comment_text?: string | null
+          commenter_account_id: string
+          content_id?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          repliz_account_id: string
+          repliz_content_id: string
+          run_at: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          attempts?: number
+          comment_text?: string | null
+          commenter_account_id?: string
+          content_id?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          repliz_account_id?: string
+          repliz_content_id?: string
+          run_at?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           account_id: string
@@ -1031,6 +1079,9 @@ export type Database = {
         Row: {
           anthropic_api_key: string | null
           auto_comment_count: number
+          auto_comment_enabled: boolean
+          auto_comment_max_minutes: number
+          auto_comment_min_minutes: number
           created_at: string
           daily_post_hour: number
           default_ai_provider: Database["public"]["Enums"]["ai_provider_t"]
@@ -1046,6 +1097,9 @@ export type Database = {
         Insert: {
           anthropic_api_key?: string | null
           auto_comment_count?: number
+          auto_comment_enabled?: boolean
+          auto_comment_max_minutes?: number
+          auto_comment_min_minutes?: number
           created_at?: string
           daily_post_hour?: number
           default_ai_provider?: Database["public"]["Enums"]["ai_provider_t"]
@@ -1061,6 +1115,9 @@ export type Database = {
         Update: {
           anthropic_api_key?: string | null
           auto_comment_count?: number
+          auto_comment_enabled?: boolean
+          auto_comment_max_minutes?: number
+          auto_comment_min_minutes?: number
           created_at?: string
           daily_post_hour?: number
           default_ai_provider?: Database["public"]["Enums"]["ai_provider_t"]

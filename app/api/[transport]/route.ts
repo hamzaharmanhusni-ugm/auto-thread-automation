@@ -5,6 +5,7 @@ import { getDefaultWorkspaceId } from "@/lib/mcp/workspace";
 import { getReplizClientForWorkspace } from "@/lib/repliz/resolve";
 import { getAiClientForWorkspace } from "@/lib/ai/resolve";
 import { generateEngagementComment } from "@/lib/ai/comment";
+import { planAutoComments } from "@/lib/auto-comment/plan";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -297,11 +298,26 @@ const mcpHandler = createMcpHandler(
 
     server.tool(
       "seed_comments",
-      "Komentar antar akun: buat 'count' akun lain yang terhubung berkomentar di sebuah konten yang sudah tayang (engagement).",
-      { content_id: z.string(), count: z.number().int().min(1).max(20).optional() },
-      async ({ content_id, count }) => {
+      "Komentar antar akun: buat 'count' akun lain yang terhubung berkomentar di konten yang sudah tayang. schedule=true menjadwalkan dengan jeda acak natural (butuh cron); default langsung kirim.",
+      {
+        content_id: z.string(),
+        count: z.number().int().min(1).max(20).optional(),
+        schedule: z.boolean().optional(),
+      },
+      async ({ content_id, count, schedule }) => {
         const sb = createServiceRoleClient();
         const ws = await getDefaultWorkspaceId();
+
+        if (schedule) {
+          const res = await planAutoComments(sb, {
+            contentId: content_id,
+            workspaceId: ws,
+            force: true,
+            count: count ?? undefined,
+          });
+          return ok(res.planned > 0 ? { ok: true, scheduled: res.planned } : { error: res.reason ?? "Gagal menjadwalkan." });
+        }
+
         const { data: content } = await sb
           .from("contents")
           .select("body, account_id, status, suggested_comments, workspace_id")

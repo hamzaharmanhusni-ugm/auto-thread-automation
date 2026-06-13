@@ -1,13 +1,37 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getCurrentWorkspaceId } from "@/lib/workspace";
 import { getReplizClientForWorkspace } from "@/lib/repliz/resolve";
 import { getAiClientForWorkspace } from "@/lib/ai/resolve";
 import { generateEngagementComment } from "@/lib/ai/comment";
+import { planAutoComments } from "@/lib/auto-comment/plan";
 
 type Result = { ok: boolean; error?: string };
+
+const PLAN_REASON: Record<string, string> = {
+  "not posted": "Konten harus sudah tayang dulu.",
+  "no repliz content id": "Konten ini belum punya ID Repliz.",
+  "no other accounts": "Tidak ada akun lain yang terhubung.",
+  "count 0": "Atur jumlah akun lebih dari 0.",
+  "content not found": "Konten tidak ditemukan.",
+};
+
+/** Schedule inter-account comments with natural staggered random delays (manual trigger). */
+export async function scheduleInterAccountComments(
+  contentId: string,
+  count: number,
+): Promise<{ ok: boolean; planned?: number; error?: string }> {
+  const ws = await getCurrentWorkspaceId();
+  const sb = createServiceRoleClient();
+  const res = await planAutoComments(sb, { contentId, workspaceId: ws, force: true, count });
+  if (res.planned > 0) {
+    revalidatePath("/konten");
+    return { ok: true, planned: res.planned };
+  }
+  return { ok: false, error: res.reason ? (PLAN_REASON[res.reason] ?? res.reason) : "Gagal menjadwalkan komentar." };
+}
 
 /**
  * Inter-account auto-comment ("komentar antar akun"): make `count` OTHER

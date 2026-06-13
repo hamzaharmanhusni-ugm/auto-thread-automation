@@ -147,6 +147,18 @@ export default function PanduanPage() {
             Di Pengaturan ada <b>Akun auto-comment</b>: berapa akun terhubung yang ikut mengomentari tiap postingan
             (untuk engagement). Isi 0 untuk mematikannya.
           </p>
+          <p>
+            <b>Komentar antar akun otomatis saat tayang.</b> Nyalakan di <Link href="/pengaturan">Pengaturan</Link> &rarr;
+            Otomasi &rarr; &ldquo;Komentar antar akun otomatis saat tayang&rdquo; dan atur jeda (mis. 2 sampai 8 menit).
+            Begitu konten tayang, akun lain menyusul berkomentar dengan jeda acak supaya terlihat natural, bukan
+            serentak. Fitur ini butuh <b>cron aktif</b> (lihat bagian Deploy di bawah) dan webhook Repliz terpasang.
+          </p>
+          <p>
+            Mau jalan manual? Buka <Link href="/konten">Konten</Link> &rarr; menu titik tiga pada konten yang sudah
+            tayang &rarr; <b>Komentar antar akun</b>, lalu pilih <b>Jeda natural</b> (acak) atau <b>Kirim sekarang</b>.
+            Lewat AI/MCP: pakai tool <code className="rounded bg-muted px-1">seed_comments</code>
+            (<code className="rounded bg-muted px-1">schedule: true</code> untuk jeda natural).
+          </p>
         </Section>
 
         <Section icon={BarChart3} title="7. Analitik konten">

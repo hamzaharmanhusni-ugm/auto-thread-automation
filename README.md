@@ -15,7 +15,7 @@ Integrasi Threads lewat **Repliz** (auto-schedule, auto-comment, komentar antar 
 - **Kalender**: tarik-lepas untuk menjadwalkan, plus **buat/generate konten manual langsung dari tanggal**.
 - **Konten**: lihat, jadwalkan, **hapus** (dengan konfirmasi), dan lihat statistik.
 - **Komentar (Auto Comment)**: mode Manual / Semi Otomatis / Otomatis Penuh (dengan konfirmasi keamanan).
-- **Komentar antar akun**: akun lain yang terhubung Repliz ikut berkomentar untuk engagement (manual dari UI atau lewat MCP).
+- **Komentar antar akun**: akun lain yang terhubung Repliz ikut berkomentar untuk engagement. Manual dari UI, lewat MCP, atau **otomatis saat konten tayang dengan jeda acak yang natural** (staggered, butuh cron).
 - **Analitik**: ringkasan engagement + performa per konten (views, suka, bagikan, komentar).
 - **Pengaturan**: kredensial Repliz, kunci AI, otomasi, **token MCP (bisa auto-generate dari UI)**, undang anggota lewat email.
 
@@ -40,6 +40,7 @@ Isi `.env.local` minimal:
 | `GEMINI_API_KEY` | Generate konten/komentar dengan AI bawaan (bisa juga diisi dari UI) |
 | `APP_URL` | URL publik app (mengisi otomatis URL MCP di panduan) |
 | `MCP_AUTH_TOKEN` | Opsional. Kalau kosong, token bisa **dibuat dari UI** (Pengaturan) |
+| `CRON_SECRET` | Opsional. Mengaktifkan runner auto-comment otomatis (`/api/cron/auto-comment`) |
 
 ```bash
 # 3. Siapkan database (sekali). Lihat docs/DEPLOYMENT.md bagian Database.

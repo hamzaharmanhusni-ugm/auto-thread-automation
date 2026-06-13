@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { verifyReplizWebhook } from "@/lib/repliz/webhook";
+import { planAutoComments } from "@/lib/auto-comment/plan";
 import type { ReplizWebhook } from "@/lib/repliz/types";
 
 export const runtime = "nodejs";
@@ -145,13 +146,23 @@ async function handleSchedule(
       ...(replizContentId ? { repliz_content_id: replizContentId } : {}),
     })
     .eq("repliz_schedule_id", scheduleId)
-    .select("content_id")
+    .select("content_id, workspace_id")
     .maybeSingle();
 
   if (sched?.content_id) {
     await sb.from("contents").update({ status: "posted" }).eq("id", sched.content_id);
+
+    // Auto-comment: now that it's live with a Repliz content id, schedule
+    // staggered inter-account comments (respects workspace settings).
+    const ws = workspaceId ?? sched.workspace_id;
+    if (ws && replizContentId) {
+      try {
+        await planAutoComments(sb, { contentId: sched.content_id, workspaceId: ws });
+      } catch {
+        // best-effort; publishing already succeeded
+      }
+    }
   }
-  void workspaceId;
 }
 
 async function logError(

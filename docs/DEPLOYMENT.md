@@ -124,6 +124,36 @@ MCP otomatis tersedia di domain yang sama dengan app, baik di Vercel maupun Dokp
 
 ---
 
+## E2. Auto-comment otomatis saat tayang (cron)
+
+Supaya komentar antar akun terkirim otomatis dengan jeda acak yang natural setelah konten tayang:
+
+1. Set env **`CRON_SECRET`** (string acak panjang) di hosting.
+2. Nyalakan di app: **Pengaturan → Otomasi → "Komentar antar akun otomatis saat tayang"**, atur jeda (mis. 2 sampai 8 menit) dan jumlah akun.
+3. Pastikan **webhook Repliz** terpasang (bagian C) — itu pemicu saat konten benar-benar tayang.
+4. Aktifkan runner tiap menit:
+
+**Vercel** — sudah ada di [`vercel.json`](../vercel.json):
+```json
+{ "crons": [{ "path": "/api/cron/auto-comment", "schedule": "* * * * *" }] }
+```
+Vercel Cron otomatis mengirim header `Authorization: Bearer <CRON_SECRET>`. Catatan: paket **Hobby** membatasi cron 1x/hari; untuk per-menit pakai paket **Pro**, atau gunakan pg_cron di bawah.
+
+**Supabase pg_cron / Dokploy** (alternatif, per menit):
+```sql
+select cron.schedule('auto-comment','* * * * *', $$
+  select net.http_post(
+    url := 'https://<domain>/api/cron/auto-comment',
+    headers := jsonb_build_object('Authorization','Bearer <CRON_SECRET>'));
+$$);
+```
+
+Cek manual: `curl "https://<domain>/api/cron/auto-comment?key=<CRON_SECRET>"` → `{ ok: true, processed, posted }`.
+
+> Cara kerja: webhook "post tayang" menjadwalkan N komentar dari akun lain dengan `run_at` acak berurutan (staggered). Runner memproses yang sudah jatuh tempo, generate teks per persona (AI) atau pakai komentar pemicu konten, lalu kirim ke Repliz.
+
+---
+
 ## F. Verifikasi
 ```bash
 curl https://<domain>/api/health            # { ok: true }

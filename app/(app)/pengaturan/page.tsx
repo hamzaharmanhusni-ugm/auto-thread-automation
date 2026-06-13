@@ -38,7 +38,7 @@ export default async function PengaturanPage() {
       ? supabase
           .from("workspace_settings")
           .select(
-            "default_ai_provider, gemini_api_key, gemini_model, posts_per_day, auto_comment_count, daily_post_hour, mcp_auth_token",
+            "default_ai_provider, gemini_api_key, gemini_model, posts_per_day, auto_comment_count, daily_post_hour, mcp_auth_token, auto_comment_enabled, auto_comment_min_minutes, auto_comment_max_minutes",
           )
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -90,6 +90,9 @@ export default async function PengaturanPage() {
             postsPerDay={settings?.posts_per_day ?? 3}
             autoCommentCount={settings?.auto_comment_count ?? 0}
             dailyPostHour={settings?.daily_post_hour ?? 8}
+            autoCommentEnabled={settings?.auto_comment_enabled ?? false}
+            autoCommentMinMinutes={settings?.auto_comment_min_minutes ?? 2}
+            autoCommentMaxMinutes={settings?.auto_comment_max_minutes ?? 8}
           />
 
           <SectionLabel>Tim</SectionLabel>

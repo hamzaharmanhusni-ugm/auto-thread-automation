@@ -77,6 +77,9 @@ export function CredentialsCards({
   postsPerDay,
   autoCommentCount,
   dailyPostHour,
+  autoCommentEnabled,
+  autoCommentMinMinutes,
+  autoCommentMaxMinutes,
 }: {
   hasReplizCreds: boolean;
   replizUsername: string | null;
@@ -90,12 +93,22 @@ export function CredentialsCards({
   postsPerDay: number;
   autoCommentCount: number;
   dailyPostHour: number;
+  autoCommentEnabled: boolean;
+  autoCommentMinMinutes: number;
+  autoCommentMaxMinutes: number;
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <ReplizCard hasCreds={hasReplizCreds} username={replizUsername} />
       <AiCard provider={aiProvider} hasKey={hasGeminiKey} model={geminiModel} />
-      <AutomationCard postsPerDay={postsPerDay} autoCommentCount={autoCommentCount} dailyPostHour={dailyPostHour} />
+      <AutomationCard
+        postsPerDay={postsPerDay}
+        autoCommentCount={autoCommentCount}
+        dailyPostHour={dailyPostHour}
+        autoCommentEnabled={autoCommentEnabled}
+        autoCommentMinMinutes={autoCommentMinMinutes}
+        autoCommentMaxMinutes={autoCommentMaxMinutes}
+      />
       <McpCard configured={mcpConfigured} token={mcpToken} fromEnv={mcpFromEnv} appUrl={appUrl} />
     </div>
   );
@@ -116,19 +129,35 @@ function AutomationCard({
   postsPerDay,
   autoCommentCount,
   dailyPostHour,
+  autoCommentEnabled,
+  autoCommentMinMinutes,
+  autoCommentMaxMinutes,
 }: {
   postsPerDay: number;
   autoCommentCount: number;
   dailyPostHour: number;
+  autoCommentEnabled: boolean;
+  autoCommentMinMinutes: number;
+  autoCommentMaxMinutes: number;
 }) {
   const [ppd, setPpd] = useState(postsPerDay);
   const [acc, setAcc] = useState(autoCommentCount);
   const [hour, setHour] = useState(dailyPostHour);
+  const [autoOn, setAutoOn] = useState(autoCommentEnabled);
+  const [minM, setMinM] = useState(autoCommentMinMinutes);
+  const [maxM, setMaxM] = useState(autoCommentMaxMinutes);
   const [pending, start] = useTransition();
 
   function save() {
     start(async () => {
-      const res = await saveAutomationSettings({ postsPerDay: ppd, autoCommentCount: acc, dailyPostHour: hour });
+      const res = await saveAutomationSettings({
+        postsPerDay: ppd,
+        autoCommentCount: acc,
+        dailyPostHour: hour,
+        autoCommentEnabled: autoOn,
+        autoCommentMinMinutes: minM,
+        autoCommentMaxMinutes: maxM,
+      });
       if (res.ok) toast.success("Pengaturan otomasi disimpan.");
       else toast.error(res.error ?? "Gagal menyimpan.");
     });
@@ -168,6 +197,50 @@ function AutomationCard({
             className="h-10 w-full rounded-md border bg-background px-3 text-sm tabular-nums outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
         </Field>
+
+        {/* Auto-comment on publish (natural staggered timing) */}
+        <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+          <label className="flex items-start gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={autoOn}
+              onChange={(e) => setAutoOn(e.target.checked)}
+              className="mt-0.5 size-4 rounded border-input accent-primary"
+            />
+            <span>
+              Komentar antar akun otomatis saat tayang
+              <span className="block text-xs font-normal text-muted-foreground">
+                Begitu konten tayang, akun lain menyusul berkomentar dengan jeda acak agar natural.
+              </span>
+            </span>
+          </label>
+          {autoOn ? (
+            <div className="flex items-end gap-2">
+              <Field label="Jeda min (menit)">
+                <input
+                  type="number"
+                  min={0}
+                  max={240}
+                  value={minM}
+                  onChange={(e) => setMinM(Number(e.target.value))}
+                  className="h-10 w-24 rounded-md border bg-background px-3 text-sm tabular-nums outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                />
+              </Field>
+              <Field label="Jeda maks (menit)">
+                <input
+                  type="number"
+                  min={0}
+                  max={240}
+                  value={maxM}
+                  onChange={(e) => setMaxM(Number(e.target.value))}
+                  className="h-10 w-24 rounded-md border bg-background px-3 text-sm tabular-nums outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                />
+              </Field>
+            </div>
+          ) : null}
+          <p className="text-xs text-muted-foreground">Butuh cron aktif. Lihat Panduan untuk setup.</p>
+        </div>
+
         <Field label="Jam posting harian (WIB)" hint="Mulai jadwal harian dari jam ini.">
           <input
             type="number"

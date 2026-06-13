@@ -105,20 +105,28 @@ export async function saveAiSettings(input: {
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(n || 0)));
 
-/** Save automation config: posts/day, auto-comment count, daily post hour (WIB). */
+/** Save automation config: posts/day, auto-comment count + timing, daily post hour (WIB). */
 export async function saveAutomationSettings(input: {
   postsPerDay: number;
   autoCommentCount: number;
   dailyPostHour: number;
+  autoCommentEnabled: boolean;
+  autoCommentMinMinutes: number;
+  autoCommentMaxMinutes: number;
 }): Promise<Result> {
   const ws = await getCurrentWorkspaceId();
   const sb = await createClient();
+  const minM = clamp(input.autoCommentMinMinutes, 0, 240);
+  const maxM = Math.max(minM, clamp(input.autoCommentMaxMinutes, 0, 240));
   const { error } = await sb.from("workspace_settings").upsert(
     {
       workspace_id: ws,
       posts_per_day: clamp(input.postsPerDay, 0, 50), // well under Threads' ~250/24h cap
       auto_comment_count: clamp(input.autoCommentCount, 0, 50),
       daily_post_hour: clamp(input.dailyPostHour, 0, 23),
+      auto_comment_enabled: input.autoCommentEnabled,
+      auto_comment_min_minutes: minM,
+      auto_comment_max_minutes: maxM,
     },
     { onConflict: "workspace_id" },
   );
