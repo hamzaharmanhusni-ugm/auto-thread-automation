@@ -137,8 +137,12 @@ Supaya komentar antar akun terkirim otomatis dengan jeda acak yang natural setel
 
 **Vercel** — sudah ada di [`vercel.json`](../vercel.json), default **harian** (aman untuk paket Hobby):
 ```json
-{ "crons": [{ "path": "/api/cron/auto-comment", "schedule": "0 1 * * *" }] }
+{ "crons": [
+  { "path": "/api/cron/auto-comment", "schedule": "0 1 * * *" },
+  { "path": "/api/cron/auto-schedule", "schedule": "0 0 * * *" }
+] }
 ```
+(`/api/cron/auto-schedule` = jadwal posting otomatis mingguan; cukup harian karena ia mem-_pre-schedule_ slot ke Repliz dan Repliz yang publish tepat waktu. `/api/cron/auto-comment` butuh per-menit untuk timing natural.)
 Vercel Cron otomatis mengirim header `Authorization: Bearer <CRON_SECRET>`, jadi untuk Vercel Cron **token harus di env** `CRON_SECRET` (bukan yang dari UI). Catatan: paket **Hobby** hanya boleh cron **1x/hari** (kalau diisi `* * * * *`, deploy akan ditolak). Untuk timing natural per-menit: pakai paket **Pro** lalu ubah jadwal ke `* * * * *`, **atau** gunakan **pg_cron** di bawah (per-menit, jalan di semua paket, bisa pakai token dari UI). Tanpa per-menit, komentar terjadwal baru terkirim saat cron harian berjalan.
 
 **Supabase pg_cron / Dokploy** (alternatif, per menit):
@@ -148,9 +152,16 @@ select cron.schedule('auto-comment','* * * * *', $$
     url := 'https://<domain>/api/cron/auto-comment',
     headers := jsonb_build_object('Authorization','Bearer <CRON_SECRET>'));
 $$);
+
+-- jadwal posting otomatis (cukup tiap jam)
+select cron.schedule('auto-schedule','0 * * * *', $$
+  select net.http_post(
+    url := 'https://<domain>/api/cron/auto-schedule',
+    headers := jsonb_build_object('Authorization','Bearer <CRON_SECRET>'));
+$$);
 ```
 
-Cek manual: `curl "https://<domain>/api/cron/auto-comment?key=<CRON_SECRET>"` → `{ ok: true, processed, posted }`.
+Cek manual: `curl "https://<domain>/api/cron/auto-comment?key=<CRON_SECRET>"` → `{ ok: true, processed, posted }`. Auto-jadwal: `curl "https://<domain>/api/cron/auto-schedule?key=<CRON_SECRET>"` → `{ ok: true, scheduled }`.
 
 > Cara kerja: webhook "post tayang" menjadwalkan N komentar dari akun lain dengan `run_at` acak berurutan (staggered). Runner memproses yang sudah jatuh tempo, generate teks per persona (AI) atau pakai komentar pemicu konten, lalu kirim ke Repliz.
 

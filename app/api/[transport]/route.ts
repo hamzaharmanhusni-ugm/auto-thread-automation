@@ -102,11 +102,21 @@ const mcpHandler = createMcpHandler(
         const ws = await getDefaultWorkspaceId();
         const { data } = await sb
           .from("workspace_settings")
-          .select("posts_per_day, auto_comment_count, daily_post_hour, default_ai_provider")
+          .select(
+            "posts_per_day, auto_comment_count, daily_post_hour, default_ai_provider, auto_schedule_enabled, posting_days, posting_times",
+          )
           .eq("workspace_id", ws)
           .maybeSingle();
         return ok(
-          data ?? { posts_per_day: 3, auto_comment_count: 0, daily_post_hour: 8, default_ai_provider: "gemini" },
+          data ?? {
+            posts_per_day: 3,
+            auto_comment_count: 0,
+            daily_post_hour: 8,
+            default_ai_provider: "gemini",
+            auto_schedule_enabled: false,
+            posting_days: [1, 3, 5],
+            posting_times: ["08:00"],
+          },
         );
       },
     );

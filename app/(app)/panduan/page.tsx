@@ -132,6 +132,12 @@ export default function PanduanPage() {
             tanggal, pilih akun, lalu tulis sendiri atau biarkan AI yang menulis. Konten tersimpan sebagai draf di
             tanggal itu.
           </p>
+          <p>
+            <b>Jadwal posting otomatis (mis. 3x seminggu).</b> Di <Link href="/pengaturan">Pengaturan</Link> &rarr;
+            <b> Jadwal Posting Otomatis</b>, pilih hari (mis. Sen/Rab/Jum) + jam, lalu aktifkan. App otomatis mengambil
+            draf paling lama dan menjadwalkannya ke slot itu lewat Repliz (Repliz yang memublikasikan tepat waktu).
+            Pastikan ada draf di menu Konten dan cron aktif (lihat bagian Deploy).
+          </p>
         </Section>
 
         <Section icon={MessageCircle} title="6. Auto-comment (balas komentar otomatis)">

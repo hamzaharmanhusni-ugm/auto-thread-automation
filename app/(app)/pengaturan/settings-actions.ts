@@ -139,6 +139,33 @@ export async function saveAiSettings(input: {
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(n || 0)));
 
+/** Save the weekly auto-posting schedule (days of week + times, WIB). */
+export async function savePostingSchedule(input: {
+  enabled: boolean;
+  days: number[];
+  times: string[];
+}): Promise<Result> {
+  const ws = await getCurrentWorkspaceId();
+  const sb = await createClient();
+  const days = [...new Set(input.days.filter((d) => d >= 1 && d <= 7))].sort((a, b) => a - b);
+  const times = [...new Set(input.times.map((t) => t.trim()).filter((t) => /^([01]?\d|2[0-3]):[0-5]\d$/.test(t)))];
+  if (input.enabled && (days.length === 0 || times.length === 0)) {
+    return { ok: false, error: "Pilih minimal satu hari dan satu jam." };
+  }
+  const { error } = await sb.from("workspace_settings").upsert(
+    {
+      workspace_id: ws,
+      auto_schedule_enabled: input.enabled,
+      posting_days: days.length ? days : [1, 3, 5],
+      posting_times: times.length ? times : ["08:00"],
+    },
+    { onConflict: "workspace_id" },
+  );
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pengaturan");
+  return { ok: true };
+}
+
 /** Save automation config: posts/day, auto-comment count + timing, daily post hour (WIB). */
 export async function saveAutomationSettings(input: {
   postsPerDay: number;

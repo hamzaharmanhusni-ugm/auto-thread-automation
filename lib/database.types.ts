@@ -206,6 +206,33 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_schedule_runs: {
+        Row: {
+          content_id: string | null
+          created_at: string
+          id: string
+          schedule_id: string | null
+          slot_at: string
+          workspace_id: string
+        }
+        Insert: {
+          content_id?: string | null
+          created_at?: string
+          id?: string
+          schedule_id?: string | null
+          slot_at: string
+          workspace_id: string
+        }
+        Update: {
+          content_id?: string | null
+          created_at?: string
+          id?: string
+          schedule_id?: string | null
+          slot_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           account_id: string
@@ -1082,9 +1109,12 @@ export type Database = {
           auto_comment_enabled: boolean
           auto_comment_max_minutes: number
           auto_comment_min_minutes: number
+          auto_schedule_enabled: boolean
           created_at: string
           cron_secret: string | null
           daily_post_hour: number
+          posting_days: number[]
+          posting_times: string[]
           default_ai_provider: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key: string | null
           gemini_model: string | null
@@ -1101,9 +1131,12 @@ export type Database = {
           auto_comment_enabled?: boolean
           auto_comment_max_minutes?: number
           auto_comment_min_minutes?: number
+          auto_schedule_enabled?: boolean
           created_at?: string
           cron_secret?: string | null
           daily_post_hour?: number
+          posting_days?: number[]
+          posting_times?: string[]
           default_ai_provider?: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key?: string | null
           gemini_model?: string | null
@@ -1120,9 +1153,12 @@ export type Database = {
           auto_comment_enabled?: boolean
           auto_comment_max_minutes?: number
           auto_comment_min_minutes?: number
+          auto_schedule_enabled?: boolean
           created_at?: string
           cron_secret?: string | null
           daily_post_hour?: number
+          posting_days?: number[]
+          posting_times?: string[]
           default_ai_provider?: Database["public"]["Enums"]["ai_provider_t"]
           gemini_api_key?: string | null
           gemini_model?: string | null

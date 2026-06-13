@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Eye, EyeOff, Loader2, Check, Plug, KeyRound, Bot, CalendarClock } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check, Plug, KeyRound, Bot, CalendarClock, CalendarDays, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,18 @@ import {
   saveMcpToken,
   generateCronSecret,
   saveCronSecret,
+  savePostingSchedule,
 } from "./settings-actions";
+
+const WEEKDAYS: { v: number; l: string }[] = [
+  { v: 1, l: "Sen" },
+  { v: 2, l: "Sel" },
+  { v: 3, l: "Rab" },
+  { v: 4, l: "Kam" },
+  { v: 5, l: "Jum" },
+  { v: 6, l: "Sab" },
+  { v: 7, l: "Min" },
+];
 
 function SecretInput({
   id,
@@ -84,6 +95,9 @@ export function CredentialsCards({
   autoCommentMaxMinutes,
   cronToken,
   cronFromEnv,
+  autoScheduleEnabled,
+  postingDays,
+  postingTimes,
 }: {
   hasReplizCreds: boolean;
   replizUsername: string | null;
@@ -102,6 +116,9 @@ export function CredentialsCards({
   autoCommentMaxMinutes: number;
   cronToken: string;
   cronFromEnv: boolean;
+  autoScheduleEnabled: boolean;
+  postingDays: number[];
+  postingTimes: string[];
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -117,8 +134,127 @@ export function CredentialsCards({
         cronToken={cronToken}
         cronFromEnv={cronFromEnv}
       />
+      <PostingScheduleCard enabled={autoScheduleEnabled} days={postingDays} times={postingTimes} />
       <McpCard configured={mcpConfigured} token={mcpToken} fromEnv={mcpFromEnv} appUrl={appUrl} />
     </div>
+  );
+}
+
+function PostingScheduleCard({
+  enabled,
+  days,
+  times,
+}: {
+  enabled: boolean;
+  days: number[];
+  times: string[];
+}) {
+  const [on, setOn] = useState(enabled);
+  const [selDays, setSelDays] = useState<number[]>(days.length ? days : [1, 3, 5]);
+  const [selTimes, setSelTimes] = useState<string[]>(times.length ? times : ["08:00"]);
+  const [pending, start] = useTransition();
+
+  function toggleDay(d: number) {
+    setSelDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort((a, b) => a - b)));
+  }
+  function setTime(i: number, v: string) {
+    setSelTimes((cur) => cur.map((t, idx) => (idx === i ? v : t)));
+  }
+  function addTime() {
+    setSelTimes((cur) => [...cur, "19:00"]);
+  }
+  function removeTime(i: number) {
+    setSelTimes((cur) => cur.filter((_, idx) => idx !== i));
+  }
+  function save() {
+    start(async () => {
+      const res = await savePostingSchedule({ enabled: on, days: selDays, times: selTimes });
+      if (res.ok) toast.success("Jadwal posting disimpan.");
+      else toast.error(res.error ?? "Gagal menyimpan.");
+    });
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <CalendarDays className="size-4 text-primary" /> Jadwal Posting Otomatis
+        </CardTitle>
+        <CardDescription>
+          Pilih hari &amp; jam (mis. 3x seminggu). App otomatis menjadwalkan draf ke slot ini lewat Repliz. Butuh cron
+          aktif.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <label className="flex items-start gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={on}
+            onChange={(e) => setOn(e.target.checked)}
+            className="mt-0.5 size-4 rounded border-input accent-primary"
+          />
+          <span>
+            Aktifkan auto-jadwal
+            <span className="block text-xs font-normal text-muted-foreground">
+              Saat aktif, draf paling lama akan dijadwalkan ke slot berikutnya secara otomatis.
+            </span>
+          </span>
+        </label>
+
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium">Hari</p>
+          <div className="flex flex-wrap gap-1.5">
+            {WEEKDAYS.map((w) => (
+              <button
+                key={w.v}
+                type="button"
+                onClick={() => toggleDay(w.v)}
+                className={`rounded-lg border px-3 py-1.5 text-sm transition ${
+                  selDays.includes(w.v)
+                    ? "border-primary bg-primary/5 font-medium text-primary ring-1 ring-primary"
+                    : "hover:bg-accent"
+                }`}
+              >
+                {w.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium">Jam (WIB)</p>
+          <div className="space-y-2">
+            {selTimes.map((t, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="time"
+                  value={t}
+                  onChange={(e) => setTime(i, e.target.value)}
+                  className="h-9 rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                />
+                {selTimes.length > 1 ? (
+                  <Button size="icon" variant="ghost" className="size-8" aria-label="Hapus jam" onClick={() => removeTime(i)}>
+                    <X className="size-3.5 text-muted-foreground" />
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+            <Button size="sm" variant="outline" onClick={addTime}>
+              <Plus className="size-3.5" /> Tambah jam
+            </Button>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Contoh: Sen/Rab/Jum jam 19.00 = 3x seminggu. Draf diambil dari menu Konten (urut terlama).
+        </p>
+
+        <Button onClick={save} disabled={pending}>
+          {pending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+          Simpan
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
