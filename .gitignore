@@ -40,3 +40,4 @@ yarn-error.log*
 /.dev-server.log
 .claude/settings.local.json
 .mcp.json
+.vercel

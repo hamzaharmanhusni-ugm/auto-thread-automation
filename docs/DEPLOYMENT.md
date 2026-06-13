@@ -135,11 +135,11 @@ Supaya komentar antar akun terkirim otomatis dengan jeda acak yang natural setel
 3. Pastikan **webhook Repliz** terpasang (bagian C) — itu pemicu saat konten benar-benar tayang.
 4. Aktifkan runner tiap menit:
 
-**Vercel** — sudah ada di [`vercel.json`](../vercel.json):
+**Vercel** — sudah ada di [`vercel.json`](../vercel.json), default **harian** (aman untuk paket Hobby):
 ```json
-{ "crons": [{ "path": "/api/cron/auto-comment", "schedule": "* * * * *" }] }
+{ "crons": [{ "path": "/api/cron/auto-comment", "schedule": "0 1 * * *" }] }
 ```
-Vercel Cron otomatis mengirim header `Authorization: Bearer <CRON_SECRET>`, jadi untuk Vercel Cron **token harus di env** `CRON_SECRET` (bukan yang dari UI). Catatan: paket **Hobby** membatasi cron 1x/hari; untuk per-menit pakai paket **Pro**, atau gunakan pg_cron di bawah (yang bisa pakai token dari UI).
+Vercel Cron otomatis mengirim header `Authorization: Bearer <CRON_SECRET>`, jadi untuk Vercel Cron **token harus di env** `CRON_SECRET` (bukan yang dari UI). Catatan: paket **Hobby** hanya boleh cron **1x/hari** (kalau diisi `* * * * *`, deploy akan ditolak). Untuk timing natural per-menit: pakai paket **Pro** lalu ubah jadwal ke `* * * * *`, **atau** gunakan **pg_cron** di bawah (per-menit, jalan di semua paket, bisa pakai token dari UI). Tanpa per-menit, komentar terjadwal baru terkirim saat cron harian berjalan.
 
 **Supabase pg_cron / Dokploy** (alternatif, per menit):
 ```sql
